@@ -8,6 +8,8 @@ ifndef GORELEASER_CURRENT_TAG
 export GORELEASER_CURRENT_TAG=$(GIT_TAG)
 endif
 
+export CLOUD_PROVIDER_GCP_VERSION := master
+
 .PHONY: build-snapshot
 build-snapshot: ## Builds a snapshot with goreleaser
 build-snapshot: dockerauth install-tool.goreleaser ; $(info $(M) building snapshot $*)
