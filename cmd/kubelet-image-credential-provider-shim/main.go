@@ -22,6 +22,6 @@ func main() {
 	rootCmd.AddCommand(newInstallCmd(logger))
 
 	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+		logger.Fatal(err)
 	}
 }
