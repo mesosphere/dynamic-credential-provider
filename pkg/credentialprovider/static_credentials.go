@@ -23,9 +23,9 @@ func NewStaticProvider(credentialsFile string) (CredentialProvider, error) {
 
 // GetCredentials will ignore the image and args arguments and simply read a credentials file and return its content.
 func (s staticProvider) GetCredentials(
-	ctx context.Context,
-	image string,
-	args []string,
+	_ context.Context,
+	_ string,
+	_ []string,
 ) (response *v1alpha1.CredentialProviderResponse, err error) {
 	credentials, err := os.ReadFile(s.credentialsFile)
 	if err != nil {

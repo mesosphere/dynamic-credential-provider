@@ -15,6 +15,14 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/fileutil"
 )
 
+//nolint:gosec // None of these are security credentials.
+const (
+	CredentialProviderSourceDirEnvVar      = "CREDENTIAL_PROVIDER_SOURCE_DIR"
+	CredentialProviderTargetDirEnvVar      = "CREDENTIAL_PROVIDER_TARGET_DIR"
+	SkipCredentialProviderBinariesEnvVar   = "SKIP_CREDENTIAL_PROVIDER_BINARIES"
+	UpdateCredentialProviderBinariesEnvVar = "UPDATE_CREDENTIAL_PROVIDER_BINARIES"
+)
+
 type config struct {
 	// SkipCredentialProviderBinaries is a comma-separated list of binaries. Each binary in the list.
 	// will be skipped when installing to the host.
@@ -25,11 +33,11 @@ type config struct {
 	UpdateCredentialProviderBinaries bool `envconfig:"UPDATE_CREDENTIAL_PROVIDER_BINARIES" default:"true"`
 
 	// CredentialProviderSourceDir controls where to read the binaries from to copy to the host.
-	//nolint:lll // This is just a long default dir.
+	//nolint:lll // Long struct tag value.
 	CredentialProviderSourceDir string `envconfig:"CREDENTIAL_PROVIDER_SOURCE_DIR" default:"/opt/image-credential-provider/bin/"`
 
 	// CredentialProviderTargetDir controls where to place the binaries on the host.
-	//nolint:lll // This is just a long default dir.
+	//nolint:lll // Long struct tag value.
 	CredentialProviderTargetDir string `envconfig:"CREDENTIAL_PROVIDER_TARGET_DIR" default:"/host/etc/kubernetes/image-credential-provider/"`
 }
 
@@ -105,7 +113,7 @@ func Install(logger logrus.FieldLogger) error {
 }
 
 // copyFileAndPermissions copies file permission.
-func copyFileAndPermissions(src, dst string, logger logrus.FieldLogger) (err error) {
+func copyFileAndPermissions(src, dst string, logger logrus.FieldLogger) error {
 	// If the source and destination are the same, we can simply return.
 	skip, err := destinationUpToDate(src, dst, logger)
 	if err != nil {
@@ -129,12 +137,14 @@ func copyFileAndPermissions(src, dst string, logger logrus.FieldLogger) (err err
 		return fmt.Errorf("failed to rename file: %s", err)
 	}
 
-	return
+	return nil
 }
 
 // destinationUptoDate compares the given files and returns
 // whether or not the destination file needs to be updated with the
 // contents of the source file.
+//
+//nolint:revive // Easy to read func that just does a lot, ignore cyclomatic complexity.
 func destinationUpToDate(src, dst string, logger logrus.FieldLogger) (bool, error) {
 	// Stat the src file.
 	f1info, err := os.Stat(src)
