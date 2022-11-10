@@ -10,6 +10,12 @@ repos:
     language: system
     files: "(.*\\.go|go.mod|go.sum)$"
     pass_filenames: false
+  - id: go-generate
+    name: go-generate
+    entry: make go-generate
+    language: system
+    files: "(.*\\.go|go.mod|go.sum)$"
+    pass_filenames: false
 - repo: https://github.com/tekwizely/pre-commit-golang
   rev: v1.0.0-rc.1
   hooks:
