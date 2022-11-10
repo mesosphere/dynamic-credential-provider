@@ -123,7 +123,7 @@ endif
 .PHONY: lint.%
 lint.%: ## Runs golangci-lint for a specific module
 lint.%: install-tool.golangci-lint install-tool.go.golines; $(info $(M) linting $* module)
-	$(if $(filter-out root,$*),cd $* && )golines -w .
+	$(if $(filter-out root,$*),cd $* && )find -name '*.go' ! -name 'zz_generated*.go' -exec golines -w {} \;
 	$(if $(filter-out root,$*),cd $* && )golangci-lint run --fix --config=$(GOLANGCI_CONFIG_FILE)
 	$(if $(filter-out root,$*),cd $* && )go fix ./...
 
