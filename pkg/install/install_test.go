@@ -60,8 +60,8 @@ func assertFileHashesDifferent(t *testing.T, a, b string) {
 func TestSuccessfulCopy(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	t.Setenv("CREDENTIAL_PROVIDER_SOURCE_DIR", "testdata")
-	t.Setenv("CREDENTIAL_PROVIDER_TARGET_DIR", tmpDir)
+	t.Setenv(install.CredentialProviderSourceDirEnvVar, "testdata")
+	t.Setenv(install.CredentialProviderTargetDirEnvVar, tmpDir)
 
 	require.NoError(t, install.Install(logrus.New()))
 
@@ -84,9 +84,11 @@ func TestSuccessfulCopy(t *testing.T) {
 func TestSuccessfulCopySkipFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	t.Setenv("CREDENTIAL_PROVIDER_SOURCE_DIR", "testdata")
-	t.Setenv("CREDENTIAL_PROVIDER_TARGET_DIR", tmpDir)
-	t.Setenv("SKIP_CREDENTIAL_PROVIDER_BINARIES", "dummybinary2")
+	const dummyBinary2Name = "dummybinary2"
+
+	t.Setenv(install.CredentialProviderSourceDirEnvVar, "testdata")
+	t.Setenv(install.CredentialProviderTargetDirEnvVar, tmpDir)
+	t.Setenv(install.SkipCredentialProviderBinariesEnvVar, dummyBinary2Name)
 
 	require.NoError(t, install.Install(logrus.New()))
 
@@ -96,7 +98,7 @@ func TestSuccessfulCopySkipFile(t *testing.T) {
 	for _, f := range testFiles {
 		destFile := filepath.Join(tmpDir, f.Name())
 
-		if f.Name() == "dummybinary2" {
+		if f.Name() == dummyBinary2Name {
 			assert.NoFileExists(t, destFile)
 			continue
 		}
@@ -115,12 +117,13 @@ func TestSuccessfulCopySkipFile(t *testing.T) {
 func TestSuccessfulCopyDoNotUpdate(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	t.Setenv("CREDENTIAL_PROVIDER_SOURCE_DIR", "testdata")
-	t.Setenv("CREDENTIAL_PROVIDER_TARGET_DIR", tmpDir)
-	t.Setenv("UPDATE_CREDENTIAL_PROVIDER_BINARIES", "false")
+	t.Setenv(install.CredentialProviderSourceDirEnvVar, "testdata")
+	t.Setenv(install.CredentialProviderTargetDirEnvVar, tmpDir)
+	t.Setenv(install.UpdateCredentialProviderBinariesEnvVar, "false")
 
 	assert.NoError(
 		t,
+		//nolint:revive // Dummy value in test file, no need for const.
 		os.WriteFile(filepath.Join(tmpDir, "dummybinary2"), []byte("differentcontent"), 0o600),
 	)
 
