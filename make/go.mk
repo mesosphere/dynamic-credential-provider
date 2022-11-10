@@ -158,8 +158,9 @@ go-clean.%: install-tool.golang; $(info $(M) running go clean for $* module)
 
 .PHONY: go-generate
 go-generate: ## Runs go generate
-go-generate: install-tool.golang ; $(info $(M) running go generate)
-	go generate ./...
+go-generate: install-tool.golang install-tool.kube-controller-tools install-tool.kube-code-generator; $(info $(M) running go generate)
+	go generate -x ./...
+	go fix ./...
 
 .PHONY: go-mod-upgrade
 go-mod-upgrade: ## Interactive check for direct module dependency upgrades
