@@ -73,6 +73,7 @@ repos:
     name: License headers - Go
     stages: [commit]
     files: "(.*\\.go|go.mod)$"
+    exclude: zz_generated
     args:
       - --license-filepath
       - header.txt
