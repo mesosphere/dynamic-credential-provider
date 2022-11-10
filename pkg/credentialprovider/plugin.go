@@ -57,6 +57,12 @@ func (e *ExecPlugin) Run(ctx context.Context) error {
 	return e.runPlugin(ctx, os.Stdin, os.Stdout, os.Args[1:])
 }
 
+var (
+	ErrEmptyImageInRequest           = errors.New("image in plugin request was empty")
+	ErrNilCredentialProviderResponse = errors.New("CredentialProviderResponse from plugin was nil")
+	ErrUnsupportedAPIVersion         = errors.New("unsupported API version")
+)
+
 func (e *ExecPlugin) runPlugin(ctx context.Context, r io.Reader, w io.Writer, args []string) error {
 	data, err := io.ReadAll(r)
 	if err != nil {
@@ -69,7 +75,7 @@ func (e *ExecPlugin) runPlugin(ctx context.Context, r io.Reader, w io.Writer, ar
 	}
 
 	if gvk.GroupVersion() != v1alpha1.SchemeGroupVersion {
-		return fmt.Errorf("group version %s is not supported", gvk.GroupVersion())
+		return fmt.Errorf("%w: %s", ErrUnsupportedAPIVersion, gvk)
 	}
 
 	request, err := decodeRequest(data)
@@ -78,7 +84,7 @@ func (e *ExecPlugin) runPlugin(ctx context.Context, r io.Reader, w io.Writer, ar
 	}
 
 	if request.Image == "" {
-		return errors.New("image in plugin request was empty")
+		return fmt.Errorf("%w", ErrEmptyImageInRequest)
 	}
 
 	response, err := e.plugin.GetCredentials(ctx, request.Image, args)
@@ -87,7 +93,7 @@ func (e *ExecPlugin) runPlugin(ctx context.Context, r io.Reader, w io.Writer, ar
 	}
 
 	if response == nil {
-		return errors.New("CredentialProviderResponse from plugin was nil")
+		return fmt.Errorf("%w", ErrNilCredentialProviderResponse)
 	}
 
 	encodedResponse, err := encodeResponse(response)
@@ -104,23 +110,44 @@ func (e *ExecPlugin) runPlugin(ctx context.Context, r io.Reader, w io.Writer, ar
 	return nil
 }
 
+var (
+	ErrUnsupportedRequestKind = errors.New(
+		"unsupported credential provider request kind",
+	)
+	ErrConversionFailure = errors.New("conversion failure")
+)
+
 func decodeRequest(data []byte) (*v1alpha1.CredentialProviderRequest, error) {
 	obj, gvk, err := codecs.UniversalDecoder(v1alpha1.SchemeGroupVersion).Decode(data, nil, nil)
 	if err != nil {
+		if runtime.IsNotRegisteredError(err) {
+			return nil, fmt.Errorf("%w: %v", ErrUnsupportedRequestKind, err)
+		}
 		return nil, err
 	}
 
 	if gvk.Kind != "CredentialProviderRequest" {
-		return nil, fmt.Errorf("kind was %q, expected CredentialProviderRequest", gvk.Kind)
+		return nil, fmt.Errorf(
+			"%w: %s (expected CredentialProviderRequest)",
+			ErrUnsupportedRequestKind,
+			gvk.Kind,
+		)
 	}
 
 	if gvk.Group != v1alpha1.GroupName {
-		return nil, fmt.Errorf("group was %q, expected %s", gvk.Group, v1alpha1.GroupName)
+		return nil, fmt.Errorf(
+			"%w: %s (expected %s)",
+			ErrUnsupportedAPIVersion, gvk.GroupVersion(), v1alpha1.SchemeGroupVersion,
+		)
 	}
 
 	request, ok := obj.(*v1alpha1.CredentialProviderRequest)
 	if !ok {
-		return nil, fmt.Errorf("unable to convert %T to *CredentialProviderRequest", obj)
+		return nil, fmt.Errorf(
+			"%w: unable to convert %T to *CredentialProviderRequest",
+			ErrConversionFailure,
+			obj,
+		)
 	}
 
 	return request, nil

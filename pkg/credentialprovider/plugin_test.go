@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubelet/pkg/apis/credentialprovider/v1alpha1"
 )
@@ -34,67 +35,56 @@ func (f *fakePlugin) GetCredentials(
 }
 
 func Test_runPlugin(t *testing.T) {
+	t.Parallel()
+
 	testcases := []struct {
 		name        string
-		in          *bytes.Buffer
-		expectedOut []byte
-		expectErr   bool
+		req         string
+		expectedOut string
+		expectErr   error
 	}{
 		{
 			name: "successful test case",
 			//nolint:lll // just a long string
-			in: bytes.NewBufferString(
-				`{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
-			),
+			req: `{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
 			//nolint:lll // just a long string
-			expectedOut: []byte(
-				`{"kind":"CredentialProviderResponse","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","cacheKeyType":"Registry","cacheDuration":"10m0s","auth":{"*.registry.io":{"username":"user","password":"password"}}}
+			expectedOut: `{"kind":"CredentialProviderResponse","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","cacheKeyType":"Registry","cacheDuration":"10m0s","auth":{"*.registry.io":{"username":"user","password":"password"}}}
 `,
-			),
-			expectErr: false,
 		},
 		{
 			name: "invalid kind",
 			//nolint:lll // just a long string
-			in: bytes.NewBufferString(
-				`{"kind":"CredentialProviderFoo","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
-			),
-			expectedOut: nil,
-			expectErr:   true,
+			req:       `{"kind":"CredentialProviderFoo","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
+			expectErr: ErrUnsupportedRequestKind,
 		},
 		{
 			name: "invalid apiVersion",
-			in: bytes.NewBufferString(
-				`{"kind":"CredentialProviderRequest","apiVersion":"foo.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
-			),
-			expectedOut: nil,
-			expectErr:   true,
+			//nolint:lll // just a long string
+			req:       `{"kind":"CredentialProviderRequest","apiVersion":"foo.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
+			expectErr: ErrUnsupportedAPIVersion,
 		},
 		{
 			name: "empty image",
-			in: bytes.NewBufferString(
-				`{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":""}`,
-			),
-			expectedOut: nil,
-			expectErr:   true,
+			//nolint:lll // just a long string
+			req:       `{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":""}`,
+			expectErr: ErrEmptyImageInRequest,
 		},
 	}
 
 	for _, tt := range testcases {
+		tt := tt // Capture range variable.
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			p := NewCredentialProvider(&fakePlugin{})
 
 			out := &bytes.Buffer{}
-			err := p.runPlugin(context.TODO(), tt.in, out, nil)
-			if err != nil && !tt.expectErr {
-				t.Fatal(err)
-			}
-
-			if err == nil && tt.expectErr {
-				t.Error("expected error but got none")
-			}
-
-			assert.Equal(t, string(tt.expectedOut), out.String())
+			require.ErrorIs(
+				t,
+				p.runPlugin(context.TODO(), bytes.NewBufferString(tt.req), out, nil),
+				tt.expectErr,
+			)
+			assert.Equal(t, tt.expectedOut, out.String())
 		})
 	}
 }
