@@ -4,7 +4,6 @@
 package credentialprovider_test
 
 import (
-	"bytes"
 	"context"
 	"os"
 	"path"
@@ -20,63 +19,58 @@ import (
 )
 
 var (
-	//nolint:lll // just a long string
-	validCredentialsBytes = []byte(
-		`{"kind":"CredentialProviderResponse","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","cacheKeyType":"Registry","cacheDuration":"10m0s","auth":{"*.registry.io":{"username":"user","password":"password"}}}`,
-	)
-	validCredentials = generateResponse("*.registry.io", 10*time.Minute, "user", "password")
+	//nolint:lll,gosec // just a long string and contains no actual credentials.
+	validCredentialsStr = `{"kind":"CredentialProviderResponse","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","cacheKeyType":"Registry","cacheDuration":"10m0s","auth":{"*.registry.io":{"username":"user","password":"password"}}}`
+	validCredentials    = generateResponse("*.registry.io", 10*time.Minute, "user", "password")
 )
 
 func TestGetCredentials(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
-		name             string
-		in               *bytes.Buffer
-		credentialsBytes []byte
-		expectedOut      *v1alpha1.CredentialProviderResponse
-		expectErr        bool
+		name              string
+		in                string
+		credentialsString string
+		expectedOut       *v1alpha1.CredentialProviderResponse
+		expectErr         bool
 	}{
 		{
 			name: "successful test case",
 			//nolint:lll // just a long string
-			in: bytes.NewBufferString(
-				`{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
-			),
-			credentialsBytes: validCredentialsBytes,
-			expectedOut:      validCredentials,
-			expectErr:        false,
+			in:                `{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
+			credentialsString: validCredentialsStr,
+			expectedOut:       validCredentials,
+			expectErr:         false,
 		},
 		{
 			name: "invalid kind",
 			//nolint:lll // just a long string
-			in: bytes.NewBufferString(
-				`{"kind":"CredentialProviderFoo","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
-			),
+			in:          `{"kind":"CredentialProviderFoo","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
 			expectedOut: nil,
 			expectErr:   true,
 		},
 		{
 			name: "invalid apiVersion",
-			in: bytes.NewBufferString(
-				`{"kind":"CredentialProviderRequest","apiVersion":"foo.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
-			),
+			//nolint:lll // just a long string
+			in:          `{"kind":"CredentialProviderRequest","apiVersion":"foo.k8s.io/v1alpha1","image":"test.registry.io/foobar"}`,
 			expectedOut: nil,
 			expectErr:   true,
 		},
 		{
 			name: "empty image",
-			in: bytes.NewBufferString(
-				`{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":""}`,
-			),
-			credentialsBytes: validCredentialsBytes,
-			expectedOut:      validCredentials,
-			expectErr:        false,
+			//nolint:lll // just a long string
+			in:                `{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1","image":""}`,
+			credentialsString: validCredentialsStr,
+			expectedOut:       validCredentials,
+			expectErr:         false,
 		},
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			credentialsFile := path.Join(t.TempDir(), "image-credentials.json")
-			err := os.WriteFile(credentialsFile, tt.credentialsBytes, 0o600)
+			err := os.WriteFile(credentialsFile, []byte(tt.credentialsString), 0o600)
 			require.NoError(t, err, "error writing temporary credentials file")
 
 			provider, err := credentialprovider.NewStaticProvider(credentialsFile)
