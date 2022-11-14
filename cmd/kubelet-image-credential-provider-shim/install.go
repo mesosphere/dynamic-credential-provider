@@ -12,8 +12,9 @@ import (
 
 func newInstallCmd(logger logrus.FieldLogger) *cobra.Command {
 	return &cobra.Command{
-		Use:  "install",
-		Args: cobra.NoArgs,
+		Use:   "install",
+		Short: "Install kubelet image credential provider binaries",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return install.Install(logger)
 		},

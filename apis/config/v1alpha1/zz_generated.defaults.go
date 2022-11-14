@@ -15,5 +15,14 @@ import (
 // Public to allow building arbitrary schemes.
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
+	scheme.AddTypeDefaultingFunc(&KubeletImageCredentialProviderShimConfig{}, func(obj interface{}) {
+		SetObjectDefaults_KubeletImageCredentialProviderShimConfig(obj.(*KubeletImageCredentialProviderShimConfig))
+	})
 	return nil
+}
+
+func SetObjectDefaults_KubeletImageCredentialProviderShimConfig(in *KubeletImageCredentialProviderShimConfig) {
+	if in.Mirror != nil {
+		SetDefaults_MirrorConfig(in.Mirror)
+	}
 }

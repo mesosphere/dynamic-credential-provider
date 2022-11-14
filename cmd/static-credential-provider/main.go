@@ -10,7 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/plugin"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/static"
 )
 
 const (
@@ -30,12 +31,12 @@ func main() {
 			if len(args) == 1 {
 				credentialsFile = args[0]
 			}
-			provider, err := credentialprovider.NewStaticProvider(credentialsFile)
+			provider, err := static.NewProvider(credentialsFile)
 			if err != nil {
 				return fmt.Errorf("error initializing static credential provider: %w", err)
 			}
 
-			err = credentialprovider.NewCredentialProvider(provider).Run(context.TODO())
+			err = plugin.NewProvider(provider).Run(context.Background())
 			if err != nil {
 				return fmt.Errorf("error running static credential provider: %w", err)
 			}
