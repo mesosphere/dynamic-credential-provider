@@ -2,8 +2,8 @@
 set -eou pipefail
 IFS=$'\n\t'
 
-TESTADATA_DIR=$(pwd)/testdata
-rm -rf "${TESTADATA_DIR}" && mkdir -p "${TESTADATA_DIR}"
+DEMODATA_DIR=$(pwd)/demodata
+rm -rf "${DEMODATA_DIR}" && mkdir -p "${DEMODATA_DIR}"
 
 docker network create kind || true
 
@@ -15,8 +15,8 @@ REGISTRY_IP=$(docker network inspect kind |
 REGISTRY_PORT=5000
 # Use a domain so it can be access on a Mac
 REGISTRY_ADDRESS=registry
-REGISTRY_CERTS_DIR="$(pwd)/testdata/certs"
-REGISTRY_AUTH_DIR="$(pwd)/testdata/auth"
+REGISTRY_CERTS_DIR="${DEMODATA_DIR}/certs"
+REGISTRY_AUTH_DIR="${DEMODATA_DIR}/auth"
 REGISTRY_USERNAME=testuser
 REGISTRY_PASSWORD=testpassword
 
@@ -55,7 +55,7 @@ docker container run --rm -d \
   -p "${REGISTRY_PORT}":"${REGISTRY_PORT}" \
   registry:2
 
-cat <<EOF >"${TESTADATA_DIR}/containerd-config.toml"
+cat <<EOF >"${DEMODATA_DIR}/containerd-config.toml"
 # explicitly use v2 config format
 version = 2
 
@@ -114,8 +114,8 @@ version = 2
       endpoint = ["https://registry.k8s.io", "https://k8s.gcr.io",]
 EOF
 
-cat <<EOF >"${TESTADATA_DIR}/image-credential-provider-config.yaml"
-apiVersion: kubelet.config.k8s.io/v1alpha1
+cat <<EOF >"${DEMODATA_DIR}/image-credential-provider-config.yaml"
+apiVersion: kubelet.config.k8s.io/v1beta1
 kind: CredentialProviderConfig
 providers:
 - name: static-credential-provider
@@ -128,12 +128,12 @@ providers:
   - "*.*.*.*.*"
   - "*.*.*.*.*.*"
   defaultCacheDuration: "1m"
-  apiVersion: credentialprovider.kubelet.k8s.io/v1alpha1
+  apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
 EOF
 
-mkdir -p "${TESTADATA_DIR}/image-credential-provider/"
+mkdir -p "${DEMODATA_DIR}/image-credential-provider/"
 
-cat <<EOF >"${TESTADATA_DIR}/image-credential-provider/static-credential-provider"
+cat <<EOF >"${DEMODATA_DIR}/image-credential-provider/static-credential-provider"
 #!/usr/bin/env bash
 
 echo "Got Request: " >> /etc/kubernetes/image-credential-provider/req.txt
@@ -142,7 +142,7 @@ echo "\$(</dev/stdin)" >> /etc/kubernetes/image-credential-provider/req.txt
 # This is an initial provider that returns a dummy reponse and will be replaced after the cluster starts up
 echo '{
   "kind":"CredentialProviderResponse",
-  "apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1",
+  "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
   "cacheKeyType":"Registry",
   "cacheDuration":"0s",
   "auth":{
@@ -152,9 +152,9 @@ echo '{
   }
 }'
 EOF
-chmod +x "${TESTADATA_DIR}/image-credential-provider/static-credential-provider"
+chmod +x "${DEMODATA_DIR}/image-credential-provider/static-credential-provider"
 
-cat <<EOF >"${TESTADATA_DIR}/kind-config.yaml"
+cat <<EOF >"${DEMODATA_DIR}/kind-config.yaml"
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
@@ -168,17 +168,17 @@ nodes:
         image-credential-provider-bin-dir: /etc/kubernetes/image-credential-provider/
         v: "6"
   extraMounts:
-  - hostPath: $(pwd)/testdata/containerd-config.toml
+  - hostPath: ${DEMODATA_DIR}/containerd-config.toml
     containerPath: /etc/containerd/config.toml
-  - hostPath: $(pwd)/testdata/image-credential-provider-config.yaml
+  - hostPath: ${DEMODATA_DIR}/image-credential-provider-config.yaml
     containerPath: /etc/kubernetes/image-credential-provider-config.yaml
   # this directory and any configured providers need to exist during Kubelet's startup
-  - hostPath: $(pwd)/testdata/image-credential-provider/
+  - hostPath: ${DEMODATA_DIR}/image-credential-provider/
     containerPath: /etc/kubernetes/image-credential-provider/
 EOF
 
 kind delete clusters image-credential-provider-test || true
-kind create cluster --config="${TESTADATA_DIR}/kind-config.yaml" --name image-credential-provider-test
+kind create cluster --config="${DEMODATA_DIR}/kind-config.yaml" --name image-credential-provider-test
 
 docker image pull nginx:latest
 docker image tag docker.io/library/nginx:latest "${REGISTRY_IP}:${REGISTRY_PORT}/library/nginx:latest"
