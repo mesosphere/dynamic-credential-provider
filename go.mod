@@ -13,7 +13,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	go.etcd.io/etcd/client/pkg/v3 v3.5.5
 	k8s.io/apimachinery v0.25.4
-	k8s.io/client-go v0.25.3
+	k8s.io/client-go v0.25.4
 	k8s.io/kubelet v0.25.3
 	sigs.k8s.io/controller-runtime v0.13.1
 )
@@ -53,7 +53,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.25.3 // indirect
+	k8s.io/api v0.25.4 // indirect
 	k8s.io/component-base v0.25.3 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
