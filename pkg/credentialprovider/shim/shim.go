@@ -7,10 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"os"
-	"regexp"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,13 +16,12 @@ import (
 
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/apis/config/v1alpha1"
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/plugin"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
 )
 
 var (
 	scheme = runtime.NewScheme()
 	codecs = serializer.NewCodecFactory(scheme)
-
-	domainSegmentRE = regexp.MustCompile(`[^.]+`)
 
 	ErrUnsupportedMirrorCredentialStrategy = errors.New("unsupported mirror credential strategy")
 )
@@ -61,19 +57,12 @@ func NewProviderFromConfigFile(fName string) (plugin.CredentialProvider, error) 
 	return &shimProvider{cfg: config}, nil
 }
 
-var (
-	ErrUnsupportedConfiguration = errors.New(
-		"the shim provider currently only supports hard-coded mirror credentials",
-	)
-	ErrInvalidImageReference = errors.New("invalid: image reference")
-)
-
 func (p shimProvider) GetCredentials(
 	_ context.Context,
 	img string,
 	_ []string,
 ) (*credentialproviderv1beta1.CredentialProviderResponse, error) {
-	globbedDomain, err := globbedDomainForImage(img)
+	globbedDomain, err := urlglobber.GlobbedDomainForImage(img)
 	if err != nil {
 		return nil, err
 	}
@@ -168,22 +157,4 @@ func (p shimProvider) getOriginCredentials(
 func isRegistryCredentialsOnly(cfg *v1alpha1.MirrorConfig) bool {
 	return cfg != nil &&
 		cfg.MirrorCredentialsStrategy == v1alpha1.MirrorCredentialsOnly
-}
-
-func globbedDomainForImage(img string) (string, error) {
-	splitImg := strings.Split(img, "/")
-	if len(splitImg) < 2 {
-		return "", fmt.Errorf("%w: missing domain", ErrInvalidImageReference)
-	}
-	domain := splitImg[0]
-	domainWithoutPort, port, errSplitPort := net.SplitHostPort(domain)
-	if errSplitPort == nil {
-		domain = domainWithoutPort
-	}
-	globbedDomain := domainSegmentRE.ReplaceAllLiteralString(domain, "*")
-	if errSplitPort == nil {
-		globbedDomain = net.JoinHostPort(domain, port)
-	}
-
-	return globbedDomain, nil
 }
