@@ -35,6 +35,7 @@ type KubeletImageCredentialProviderShimConfig struct {
 }
 
 // MirrorCredentialsStrategy specifies how to handle mirror registry credentials.
+// +kubebuilder:validation:Enum=MirrorCredentialsOnly;MirrorCredentialsFirst;MirrorCredentialsLast
 type MirrorCredentialsStrategy string
 
 //nolint:gosec // No credentials here.
