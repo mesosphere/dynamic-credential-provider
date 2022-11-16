@@ -38,23 +38,29 @@ var apiVersions = map[string]schema.GroupVersion{
 // Copied from https://github.com/kubernetes/kubernetes/blob/v1.25.4/pkg/credentialprovider/plugin/config.go#L72-L128.
 //
 //nolint:revive // This is copied as is from upstream so not refactored to reduce cyclomatic complexity.
-func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) field.ErrorList {
+func validateCredentialProviderConfig(
+	config *v1beta1.CredentialProviderConfig,
+	rootPath *field.Path,
+) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	fieldPath := rootPath.Child("providers")
 
 	if len(config.Providers) == 0 {
 		allErrs = append(
 			allErrs,
-			field.Required(field.NewPath("providers"), "at least 1 item in plugins is required"),
+			field.Required(fieldPath, "at least 1 item in plugins is required"),
 		)
 	}
 
-	fieldPath := field.NewPath("providers")
-	for _, provider := range config.Providers {
+	for idx, provider := range config.Providers {
+		providerFieldPath := fieldPath.Index(idx)
+
 		if strings.Contains(provider.Name, "/") {
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					fieldPath.Child("name"),
+					providerFieldPath.Child("name"),
 					provider.Name,
 					"provider name cannot contain '/'",
 				),
@@ -65,7 +71,7 @@ func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) 
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					fieldPath.Child("name"),
+					providerFieldPath.Child("name"),
 					provider.Name,
 					"provider name cannot contain spaces",
 				),
@@ -76,7 +82,7 @@ func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) 
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					fieldPath.Child("name"),
+					providerFieldPath.Child("name"),
 					provider.Name,
 					"provider name cannot be '.'",
 				),
@@ -87,7 +93,7 @@ func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) 
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					fieldPath.Child("name"),
+					providerFieldPath.Child("name"),
 					provider.Name,
 					"provider name cannot be '..'",
 				),
@@ -97,7 +103,7 @@ func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) 
 		if provider.APIVersion == "" {
 			allErrs = append(
 				allErrs,
-				field.Required(fieldPath.Child("apiVersion"), "apiVersion is required"),
+				field.Required(providerFieldPath.Child("apiVersion"), "apiVersion is required"),
 			)
 		} else if _, ok := apiVersions[provider.APIVersion]; !ok {
 			validAPIVersions := []string{}
@@ -105,14 +111,17 @@ func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) 
 				validAPIVersions = append(validAPIVersions, apiVersion)
 			}
 
-			allErrs = append(allErrs, field.NotSupported(fieldPath.Child("apiVersion"), provider.APIVersion, validAPIVersions))
+			allErrs = append(
+				allErrs,
+				field.NotSupported(providerFieldPath.Child("apiVersion"), provider.APIVersion, validAPIVersions),
+			)
 		}
 
 		if len(provider.MatchImages) == 0 {
 			allErrs = append(
 				allErrs,
 				field.Required(
-					fieldPath.Child("matchImages"),
+					providerFieldPath.Child("matchImages"),
 					"at least 1 item in matchImages is required",
 				),
 			)
@@ -123,7 +132,7 @@ func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) 
 				allErrs = append(
 					allErrs,
 					field.Invalid(
-						fieldPath.Child("matchImages"),
+						providerFieldPath.Child("matchImages"),
 						matchImage,
 						fmt.Sprintf("match image is invalid: %s", err.Error()),
 					),
@@ -135,7 +144,7 @@ func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) 
 			allErrs = append(
 				allErrs,
 				field.Required(
-					fieldPath.Child("defaultCacheDuration"),
+					providerFieldPath.Child("defaultCacheDuration"),
 					"defaultCacheDuration is required",
 				),
 			)
@@ -145,7 +154,7 @@ func validateCredentialProviderConfig(config *v1beta1.CredentialProviderConfig) 
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					fieldPath.Child("defaultCacheDuration"),
+					providerFieldPath.Child("defaultCacheDuration"),
 					provider.DefaultCacheDuration.Duration,
 					"defaultCacheDuration must be greater than or equal to 0",
 				),

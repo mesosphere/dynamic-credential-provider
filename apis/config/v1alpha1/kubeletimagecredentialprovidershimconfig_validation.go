@@ -31,7 +31,13 @@ func (*KubeletImageCredentialProviderShimConfig) ValidateDelete() error {
 func (c *KubeletImageCredentialProviderShimConfig) validate() error {
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, validateCredentialProviderConfig(c.CredentialProviders)...)
+	allErrs = append(
+		allErrs,
+		validateCredentialProviderConfig(
+			c.CredentialProviders,
+			field.NewPath("credentialProviders"),
+		)...,
+	)
 
 	if len(allErrs) == 0 {
 		return nil

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 	"k8s.io/kubelet/pkg/apis/credentialprovider/v1alpha1"
 )
@@ -206,7 +207,7 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			errs := validateCredentialProviderConfig(tt.config)
+			errs := validateCredentialProviderConfig(tt.config, &field.Path{})
 
 			if tt.shouldErr && len(errs) == 0 {
 				t.Errorf("expected error but got none")
