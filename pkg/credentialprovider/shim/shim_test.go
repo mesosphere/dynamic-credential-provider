@@ -30,3 +30,21 @@ func ExampleGetCredentials() {
 	}
 	// Output: {"kind":"CredentialProviderResponse","apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1","cacheKeyType":"Image","cacheDuration":"5s","auth":{"img.v1beta1/abc/def:v1.2.3":{"username":"v1beta1user","password":"v1beta1password"}}}
 }
+
+func ExampleGetCredentialsWithMirror() {
+	p, err := shim.NewProviderFromConfigFile(filepath.Join("testdata", "config-with-mirror.yaml"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	creds, err := p.GetCredentials(context.Background(), "img.v1beta1/abc/def:v1.2.3", nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := json.NewEncoder(os.Stdout).Encode(creds); err != nil {
+		log.Fatal(err)
+	}
+	// Output: {"kind":"CredentialProviderResponse","apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1","cacheKeyType":"Image","cacheDuration":"5s","auth":{"*.*":{"username":"v1beta1user","password":"v1beta1password"},"img.v1beta1/abc/def:v1.2.3":{"username":"mirroruser","password":"mirrorpassword"}}}
+}

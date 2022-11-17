@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -113,9 +114,7 @@ func (p *shimProvider) registerCredentialProvider(name string, provider *pluginP
 	p.providers[name] = provider
 }
 
-var (
-	ErrTooManyCredentials = errors.New("too many credentials")
-)
+var ErrTooManyCredentials = errors.New("too many credentials")
 
 func (p *shimProvider) GetCredentials(
 	_ context.Context,
@@ -129,7 +128,7 @@ func (p *shimProvider) GetCredentials(
 
 	authMap := map[string]credentialproviderv1beta1.AuthConfig{}
 
-	mirrorAuth, mirrorAuthFound, err := p.getMirrorCredentials(img)
+	mirrorAuth, mirrorAuthFound, err := p.getMirrorCredentialsForImage(img)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mirror credentials: %w", err)
 	}
@@ -140,7 +139,7 @@ func (p *shimProvider) GetCredentials(
 		cacheDuration = mirrorAuth.CacheDuration.Duration
 	}
 
-	originAuth, originAuthFound, err := p.getOriginCredentials(img)
+	originAuth, originAuthFound, err := p.getCredentialsForImage(img)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get origin credentials: %w", err)
 	}
@@ -230,21 +229,31 @@ func singleAuthFromResponse(resp *credentialproviderv1beta1.CredentialProviderRe
 	return credentialproviderv1beta1.AuthConfig{}, nil
 }
 
-func (p *shimProvider) getMirrorCredentials(
-	img string, //nolint:unparam,revive // Placeholder for now.
-) (*credentialproviderv1beta1.CredentialProviderResponse, bool, error) { //nolint:unparam // Placeholder for now
+func (p *shimProvider) getMirrorCredentialsForImage(
+	img string,
+) (*credentialproviderv1beta1.CredentialProviderResponse, bool, error) {
 	// If mirror is not configured then return no credentials for the mirror.
 	if p.cfg.Mirror == nil {
 		return nil, false, nil
 	}
 
-	// TODO Call relevant credential provider plugin based on the image domain replaced with the mirror URL to get the
-	// credentials for the mirror.
+	imgURL, err := urlglobber.ParseSchemelessURL(img)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to parse image %q to a URL: %w", img, err)
+	}
 
-	return nil, false, nil
+	mirrorURL, err := urlglobber.ParseSchemelessURL(p.cfg.Mirror.Endpoint)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to parse mirror %q to a URL: %w", img, err)
+	}
+
+	imgURL.Host = mirrorURL.Host
+	imgURL = mirrorURL.JoinPath(imgURL.Path)
+
+	return p.getCredentialsForImage(strings.TrimPrefix(imgURL.String(), "//"))
 }
 
-func (p *shimProvider) getOriginCredentials(
+func (p *shimProvider) getCredentialsForImage(
 	img string,
 ) (*credentialproviderv1beta1.CredentialProviderResponse, bool, error) {
 	// If only mirror credentials should be used then return no credentials for the origin.
