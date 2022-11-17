@@ -8,10 +8,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"sync"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/klog/v2"
+	"k8s.io/kubelet/pkg/apis/credentialprovider/install"
 	credentialproviderv1beta1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
 
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/apis/config/v1alpha1"
@@ -29,10 +34,14 @@ var (
 //nolint:gochecknoinits // init is idiomatically used to set up schemes
 func init() {
 	_ = v1alpha1.AddToScheme(scheme)
+	install.Install(scheme)
 }
 
 type shimProvider struct {
 	cfg *v1alpha1.KubeletImageCredentialProviderShimConfig
+
+	providersMutex sync.Mutex
+	providers      map[string]Provider
 }
 
 func NewProviderFromConfigFile(fName string) (plugin.CredentialProvider, error) {
@@ -54,10 +63,61 @@ func NewProviderFromConfigFile(fName string) (plugin.CredentialProvider, error) 
 		)
 	}
 
-	return &shimProvider{cfg: config}, nil
+	shimProvider := &shimProvider{cfg: config, providers: map[string]Provider{}}
+	if err := shimProvider.registerCredentialProviderPlugins(); err != nil {
+		return nil, err
+	}
+
+	return shimProvider, nil
 }
 
-func (p shimProvider) GetCredentials(
+// registerCredentialProviderPlugins is called to register external credential provider plugins according to the
+// CredentialProviderConfig config file.
+func (p *shimProvider) registerCredentialProviderPlugins() error {
+	if p.cfg == nil || p.cfg.CredentialProviders == nil {
+		return nil
+	}
+
+	pluginBinDir := p.cfg.CredentialProviderPluginBinDir
+
+	if _, err := os.Stat(pluginBinDir); err != nil {
+		return fmt.Errorf("error inspecting plugin binary directory %q: %w", pluginBinDir, err)
+	}
+
+	for _, provider := range p.cfg.CredentialProviders.Providers {
+		pluginBin := filepath.Join(pluginBinDir, provider.Name)
+		if _, err := os.Stat(pluginBin); err != nil {
+			return fmt.Errorf("error inspecting binary executable %q: %w", pluginBin, err)
+		}
+
+		pluginProvider, err := newPluginProvider(pluginBinDir, provider)
+		if err != nil {
+			return fmt.Errorf("error initializing plugin provider %q: %w", provider.Name, err)
+		}
+
+		p.registerCredentialProvider(provider.Name, pluginProvider)
+	}
+
+	return nil
+}
+
+// registerCredentialProvider registers the credential provider.
+func (p *shimProvider) registerCredentialProvider(name string, provider *pluginProvider) {
+	p.providersMutex.Lock()
+	defer p.providersMutex.Unlock()
+	_, found := p.providers[name]
+	if found {
+		klog.Fatalf("Credential provider %q was registered twice", name)
+	}
+	klog.V(4).Infof("Registered credential provider %q", name)
+	p.providers[name] = provider
+}
+
+var (
+	ErrTooManyCredentials = errors.New("too many credentials")
+)
+
+func (p *shimProvider) GetCredentials(
 	_ context.Context,
 	img string,
 	_ []string,
@@ -69,20 +129,44 @@ func (p shimProvider) GetCredentials(
 
 	authMap := map[string]credentialproviderv1beta1.AuthConfig{}
 
-	mirrorAuth, mirrorAuthFound := p.getMirrorCredentials(img)
+	mirrorAuth, mirrorAuthFound, err := p.getMirrorCredentials(img)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mirror credentials: %w", err)
+	}
 
-	originAuth, originAuthFound := p.getOriginCredentials(img)
+	cacheDuration := 0 * time.Second
+
+	if mirrorAuthFound {
+		cacheDuration = mirrorAuth.CacheDuration.Duration
+	}
+
+	originAuth, originAuthFound, err := p.getOriginCredentials(img)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get origin credentials: %w", err)
+	}
 
 	if originAuthFound {
-		authMap[img] = originAuth
+		authMap[img], err = singleAuthFromResponse(originAuth)
+		if err != nil {
+			return nil, err
+		}
+
+		if !mirrorAuthFound || cacheDuration > originAuth.CacheDuration.Duration {
+			cacheDuration = originAuth.CacheDuration.Duration
+		}
 	}
 
 	if p.cfg.Mirror != nil && mirrorAuthFound {
+		mirrorAuthConfig, err := singleAuthFromResponse(mirrorAuth)
+		if err != nil {
+			return nil, err
+		}
+
 		switch p.cfg.Mirror.MirrorCredentialsStrategy {
 		case v1alpha1.MirrorCredentialsOnly:
 			// Only return mirror credentials by setting the image auth for the full image name whether it is already set or
 			// not.
-			authMap[img] = mirrorAuth
+			authMap[img] = mirrorAuthConfig
 		case v1alpha1.MirrorCredentialsLast:
 			// Set mirror credentials for globbed domain to ensure that the mirror credentials are used last (glob matches
 			// have lowest precedence).
@@ -94,7 +178,7 @@ func (p shimProvider) GetCredentials(
 			// If containerd fails to pull using the mirror credentials, then the kubelet will try the origin credentials,
 			// which containerd will try first against the configured mirror (which should fail as incorrect credentials for
 			// this registry) and then against the origin registry.
-			authMap[globbedDomain] = mirrorAuth
+			authMap[globbedDomain] = mirrorAuthConfig
 		case v1alpha1.MirrorCredentialsFirst:
 			// Set mirror credentials for image to ensure that the mirror credentials are used first, and set any existing
 			// origin credentials for the globbed domain to ensure they are used last (glob matches have lowest precedence).
@@ -110,7 +194,7 @@ func (p shimProvider) GetCredentials(
 			if found {
 				authMap[globbedDomain] = existing
 			}
-			authMap[img] = mirrorAuth
+			authMap[img] = mirrorAuthConfig
 		default:
 			return nil, fmt.Errorf(
 				"%w: %q",
@@ -121,37 +205,74 @@ func (p shimProvider) GetCredentials(
 	}
 
 	return &credentialproviderv1beta1.CredentialProviderResponse{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: credentialproviderv1beta1.SchemeGroupVersion.String(),
+			Kind:       "CredentialProviderResponse",
+		},
 		CacheKeyType:  credentialproviderv1beta1.ImagePluginCacheKeyType,
-		CacheDuration: &metav1.Duration{Duration: 0},
+		CacheDuration: &metav1.Duration{Duration: cacheDuration},
 		Auth:          authMap,
 	}, nil
 }
 
-func (p shimProvider) getMirrorCredentials(
+func singleAuthFromResponse(resp *credentialproviderv1beta1.CredentialProviderResponse) (
+	credentialproviderv1beta1.AuthConfig, error,
+) {
+	if len(resp.Auth) > 1 {
+		return credentialproviderv1beta1.AuthConfig{},
+			fmt.Errorf("%w: %d (expected 1)", ErrTooManyCredentials, len(resp.Auth))
+	}
+
+	for _, v := range resp.Auth {
+		return v, nil
+	}
+
+	return credentialproviderv1beta1.AuthConfig{}, nil
+}
+
+func (p *shimProvider) getMirrorCredentials(
 	img string, //nolint:unparam,revive // Placeholder for now.
-) (credentialproviderv1beta1.AuthConfig, bool) { //nolint:unparam // Placeholder for now
+) (*credentialproviderv1beta1.CredentialProviderResponse, bool, error) { //nolint:unparam // Placeholder for now
 	// If mirror is not configured then return no credentials for the mirror.
 	if p.cfg.Mirror == nil {
-		return credentialproviderv1beta1.AuthConfig{}, false
+		return nil, false, nil
 	}
 
 	// TODO Call relevant credential provider plugin based on the image domain replaced with the mirror URL to get the
 	// credentials for the mirror.
 
-	return credentialproviderv1beta1.AuthConfig{}, false
+	return nil, false, nil
 }
 
-func (p shimProvider) getOriginCredentials(
-	img string, //nolint:unparam,revive // Placeholder for now
-) (credentialproviderv1beta1.AuthConfig, bool) { //nolint:unparam // Placeholder for now
+func (p *shimProvider) getOriginCredentials(
+	img string,
+) (*credentialproviderv1beta1.CredentialProviderResponse, bool, error) {
 	// If only mirror credentials should be used then return no credentials for the origin.
 	if isRegistryCredentialsOnly(p.cfg.Mirror) {
-		return credentialproviderv1beta1.AuthConfig{}, false
+		return nil, false, nil
 	}
 
-	// TODO Call relevant credential provider plugin based on the image to get the credentials for the origin.
+	for _, prov := range p.providers {
+		resp, err := prov.Provide(img)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to call plugin: %w", err)
+		}
 
-	return credentialproviderv1beta1.AuthConfig{}, false
+		if resp == nil || len(resp.Auth) == 0 {
+			continue
+		}
+
+		v1beta1Resp := &credentialproviderv1beta1.CredentialProviderResponse{}
+		if err := scheme.Convert(resp, v1beta1Resp, nil); err != nil {
+			return nil,
+				false,
+				fmt.Errorf("failed to convert response from type %T to type %T: %w", resp, v1beta1Resp, err)
+		}
+
+		return v1beta1Resp, true, nil
+	}
+
+	return nil, false, nil
 }
 
 func isRegistryCredentialsOnly(cfg *v1alpha1.MirrorConfig) bool {

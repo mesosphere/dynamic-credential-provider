@@ -32,6 +32,9 @@ type KubeletImageCredentialProviderShimConfig struct {
 	// https://github.com/kubernetes/kubelet/blob/v0.25.4/config/v1beta1/types.go#L921 for info.
 	// +optional
 	CredentialProviders *v1beta1.CredentialProviderConfig `json:"credentialProviders,omitempty"`
+
+	// CredentialProviderPluginBinDir is the directory where credential provider plugin binaries are located.
+	CredentialProviderPluginBinDir string `json:"credentialProviderPluginBinDir,omitempty"`
 }
 
 // MirrorCredentialsStrategy specifies how to handle mirror registry credentials.
