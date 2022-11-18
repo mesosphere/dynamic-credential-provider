@@ -11,25 +11,26 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/apis/config/v1alpha1"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
 	"golang.org/x/sync/singleflight"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/klog/v2"
 	"k8s.io/kubelet/config/v1beta1"
 	credentialproviderapi "k8s.io/kubelet/pkg/apis/credentialprovider"
+
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/apis/config/v1alpha1"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/log"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
 )
 
 // newPluginProvider returns a new pluginProvider based on the credential provider config.
 func newPluginProvider(
 	pluginBinDir string,
-	provider v1beta1.CredentialProvider,
+	provider *v1beta1.CredentialProvider,
 ) (*pluginProvider, error) {
 	mediaType := "application/json"
 	info, ok := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), mediaType)
@@ -43,7 +44,8 @@ func newPluginProvider(
 	}
 
 	return &pluginProvider{
-		matchImages: provider.MatchImages,
+		matchImages:          provider.MatchImages,
+		defaultCacheDuration: provider.DefaultCacheDuration,
 		plugin: &execPlugin{
 			name:         provider.Name,
 			apiVersion:   provider.APIVersion,
@@ -58,6 +60,7 @@ func newPluginProvider(
 
 type Provider interface {
 	Provide(image string) (*credentialproviderapi.CredentialProviderResponse, error)
+	DefaultCacheDuration() time.Duration
 }
 
 // pluginProvider is the plugin-based implementation of the DockerConfigProvider interface.
@@ -71,6 +74,8 @@ type pluginProvider struct {
 	// against this list of match URLs.
 	matchImages []string
 
+	defaultCacheDuration *metav1.Duration
+
 	// plugin is the exec implementation of the credential providing plugin.
 	plugin Plugin
 }
@@ -78,6 +83,14 @@ type pluginProvider struct {
 var ErrInvalidCredentialProviderResponse = errors.New(
 	"invalid response type returned by external credential provider",
 )
+
+func (p *pluginProvider) DefaultCacheDuration() time.Duration {
+	if p.defaultCacheDuration != nil {
+		return p.defaultCacheDuration.Duration
+	}
+
+	return 0
+}
 
 // Provide returns a *credentialproviderapi.CredentialProviderResponse based on the credentials returned
 // by executing the plugin.
@@ -153,7 +166,8 @@ func (e *execPlugin) ExecPlugin(
 	ctx context.Context,
 	image string,
 ) (*credentialproviderapi.CredentialProviderResponse, error) {
-	klog.V(5).Infof("Getting image %s credentials from external exec plugin %s", image, e.name)
+	klog.V(log.KLogDebug).
+		Infof("Getting image %s credentials from external exec plugin %s", image, e.name)
 
 	authRequest := &credentialproviderapi.CredentialProviderRequest{Image: image}
 	data, err := e.encodeRequest(authRequest)
@@ -172,10 +186,13 @@ func (e *execPlugin) ExecPlugin(
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, filepath.Join(e.pluginBinDir, e.name), e.args...)
+	cmd := exec.CommandContext( //nolint:gosec // Safe command args.
+		ctx,
+		filepath.Join(e.pluginBinDir, e.name),
+		e.args...)
 	cmd.Stdout, cmd.Stderr, cmd.Stdin = stdout, stderr, stdin
 
-	var configEnvVars []string
+	configEnvVars := make([]string, 0, len(e.envVars))
 	for _, v := range e.envVars {
 		configEnvVars = append(configEnvVars, fmt.Sprintf("%s=%s", v.Name, v.Value))
 	}
@@ -186,7 +203,7 @@ func (e *execPlugin) ExecPlugin(
 	// also, this behaviour is inline with Credential Provider Config spec
 	cmd.Env = mergeEnvVars(e.environ(), configEnvVars)
 
-	if err = e.runPlugin(ctx, cmd, image); err != nil {
+	if err := e.runPlugin(ctx, cmd, image); err != nil {
 		return nil, err
 	}
 
@@ -235,7 +252,7 @@ func (e *execPlugin) runPlugin(ctx context.Context, cmd *exec.Cmd, image string)
 	return nil
 }
 
-// encodeRequest encodes the internal CredentialProviderRequest type into the v1alpha1 version in json
+// encodeRequest encodes the internal CredentialProviderRequest type into the v1alpha1 version in json.
 func (e *execPlugin) encodeRequest(
 	request *credentialproviderapi.CredentialProviderRequest,
 ) ([]byte, error) {
@@ -248,7 +265,7 @@ func (e *execPlugin) encodeRequest(
 }
 
 // decodeResponse decodes data into the internal CredentialProviderResponse type.
-func (e *execPlugin) decodeResponse(
+func (*execPlugin) decodeResponse(
 	data []byte,
 ) (*credentialproviderapi.CredentialProviderResponse, error) {
 	obj, gvk, err := codecs.UniversalDecoder().Decode(data, nil, nil)
@@ -277,19 +294,11 @@ func (e *execPlugin) decodeResponse(
 	return nil, fmt.Errorf("unable to convert %T to *CredentialProviderResponse", obj)
 }
 
-// parseRegistry extracts the registry hostname of an image (including port if specified).
-func parseRegistry(image string) string {
-	imageParts := strings.Split(image, "/")
-	return imageParts[0]
-}
-
 // mergedEnvVars overlays system defined env vars with credential provider env vars,
 // it gives priority to the credential provider vars allowing user to override system
-// env vars
+// env vars.
 func mergeEnvVars(sysEnvVars, credProviderVars []string) []string {
-	mergedEnvVars := sysEnvVars
-	for _, credProviderVar := range credProviderVars {
-		mergedEnvVars = append(mergedEnvVars, credProviderVar)
-	}
-	return mergedEnvVars
+	var mergedEnvVars []string
+	mergedEnvVars = append(mergedEnvVars, sysEnvVars...)
+	return append(mergedEnvVars, credProviderVars...)
 }

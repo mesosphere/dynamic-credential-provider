@@ -3,8 +3,8 @@
 # Copyright 2022 D2iQ, Inc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
->&2 echo "Received Request: "
->&2 echo "$(</dev/stdin)"
+echo >&2 "Received Request: "
+echo >&2 "$(</dev/stdin)"
 
 echo '{
   "kind":"CredentialProviderResponse",

@@ -22,6 +22,7 @@ import (
 
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/apis/config/v1alpha1"
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/plugin"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/log"
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
 )
 
@@ -86,12 +87,14 @@ func (p *shimProvider) registerCredentialProviderPlugins() error {
 	}
 
 	for _, provider := range p.cfg.CredentialProviders.Providers {
+		provider := provider // Capture range variable.
+
 		pluginBin := filepath.Join(pluginBinDir, provider.Name)
 		if _, err := os.Stat(pluginBin); err != nil {
 			return fmt.Errorf("error inspecting binary executable %q: %w", pluginBin, err)
 		}
 
-		pluginProvider, err := newPluginProvider(pluginBinDir, provider)
+		pluginProvider, err := newPluginProvider(pluginBinDir, &provider)
 		if err != nil {
 			return fmt.Errorf("error initializing plugin provider %q: %w", provider.Name, err)
 		}
@@ -110,7 +113,7 @@ func (p *shimProvider) registerCredentialProvider(name string, provider *pluginP
 	if found {
 		klog.Fatalf("Credential provider %q was registered twice", name)
 	}
-	klog.V(4).Infof("Registered credential provider %q", name)
+	klog.V(log.KLogDebug).Infof("Registered credential provider %q", name)
 	p.providers[name] = provider
 }
 
@@ -121,85 +124,32 @@ func (p *shimProvider) GetCredentials(
 	img string,
 	_ []string,
 ) (*credentialproviderv1beta1.CredentialProviderResponse, error) {
-	globbedDomain, err := urlglobber.GlobbedDomainForImage(img)
-	if err != nil {
-		return nil, err
-	}
-
 	authMap := map[string]credentialproviderv1beta1.AuthConfig{}
 
-	mirrorAuth, mirrorAuthFound, err := p.getMirrorCredentialsForImage(img)
+	mirrorAuthConfig, cacheDuration, mirrorAuthFound, err := p.getMirrorCredentialsForImage(img)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mirror credentials: %w", err)
 	}
 
-	cacheDuration := 0 * time.Second
-
-	if mirrorAuthFound {
-		cacheDuration = mirrorAuth.CacheDuration.Duration
-	}
-
-	originAuth, originAuthFound, err := p.getCredentialsForImage(img)
+	originAuthConfig, originCacheDuration, originAuthFound, err := p.getCredentialsForImage(img)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get origin credentials: %w", err)
 	}
 
 	if originAuthFound {
-		authMap[img], err = singleAuthFromResponse(originAuth)
-		if err != nil {
-			return nil, err
-		}
+		authMap[img] = originAuthConfig
 
-		if !mirrorAuthFound || cacheDuration > originAuth.CacheDuration.Duration {
-			cacheDuration = originAuth.CacheDuration.Duration
+		if !mirrorAuthFound || cacheDuration > originCacheDuration {
+			cacheDuration = originCacheDuration
 		}
 	}
 
 	if p.cfg.Mirror != nil && mirrorAuthFound {
-		mirrorAuthConfig, err := singleAuthFromResponse(mirrorAuth)
+		err := updateAuthConfigMapForMirror(
+			authMap, img, p.cfg.Mirror.MirrorCredentialsStrategy, mirrorAuthConfig,
+		)
 		if err != nil {
 			return nil, err
-		}
-
-		switch p.cfg.Mirror.MirrorCredentialsStrategy {
-		case v1alpha1.MirrorCredentialsOnly:
-			// Only return mirror credentials by setting the image auth for the full image name whether it is already set or
-			// not.
-			authMap[img] = mirrorAuthConfig
-		case v1alpha1.MirrorCredentialsLast:
-			// Set mirror credentials for globbed domain to ensure that the mirror credentials are used last (glob matches
-			// have lowest precedence).
-			//
-			// This means that the kubelet will first try the mirror credentials, which containerd will try against both the
-			// configured mirror in containerd and the origin registry (which should fail as incorrect credentials for this
-			// registry) if the image is not found in the mirror.
-			//
-			// If containerd fails to pull using the mirror credentials, then the kubelet will try the origin credentials,
-			// which containerd will try first against the configured mirror (which should fail as incorrect credentials for
-			// this registry) and then against the origin registry.
-			authMap[globbedDomain] = mirrorAuthConfig
-		case v1alpha1.MirrorCredentialsFirst:
-			// Set mirror credentials for image to ensure that the mirror credentials are used first, and set any existing
-			// origin credentials for the globbed domain to ensure they are used last (glob matches have lowest precedence).
-			//
-			// This means that the kubelet will first try the origin credentials, which containerd will try against both the
-			// configured mirror in containerd (which should fail as incorrect credentials for this registry) and the origin
-			// registry.
-			//
-			// If containerd fails to pull using the origin credentials, then the kubelet will try the mirror credentials,
-			// which containerd will try first against the configured mirror and then against the origin registry (which
-			// should fail as incorrect credentials for this registry) if the image is not found in the mirror.
-			existing, found := authMap[img]
-			if found {
-				authMap[globbedDomain] = existing
-			}
-			authMap[img] = mirrorAuthConfig
-		default:
-			return nil, fmt.Errorf(
-				"%w: %q",
-				ErrUnsupportedMirrorCredentialStrategy,
-				p.cfg.Mirror.MirrorCredentialsStrategy,
-			)
 		}
 	}
 
@@ -229,22 +179,85 @@ func singleAuthFromResponse(resp *credentialproviderv1beta1.CredentialProviderRe
 	return credentialproviderv1beta1.AuthConfig{}, nil
 }
 
+func updateAuthConfigMapForMirror(
+	authMap map[string]credentialproviderv1beta1.AuthConfig,
+	img string,
+	mirrorCredentialsStrategy v1alpha1.MirrorCredentialsStrategy,
+	mirrorAuthConfig credentialproviderv1beta1.AuthConfig,
+) error {
+	globbedDomain, err := urlglobber.GlobbedDomainForImage(img)
+	if err != nil {
+		return err
+	}
+
+	switch mirrorCredentialsStrategy {
+	case v1alpha1.MirrorCredentialsOnly:
+		// Only return mirror credentials by setting the image auth for the full image name whether it is already set or
+		// not.
+		authMap[img] = mirrorAuthConfig
+	case v1alpha1.MirrorCredentialsLast:
+		// Set mirror credentials for globbed domain to ensure that the mirror credentials are used last (glob matches
+		// have lowest precedence).
+		//
+		// This means that the kubelet will first try the mirror credentials, which containerd will try against both the
+		// configured mirror in containerd and the origin registry (which should fail as incorrect credentials for this
+		// registry) if the image is not found in the mirror.
+		//
+		// If containerd fails to pull using the mirror credentials, then the kubelet will try the origin credentials,
+		// which containerd will try first against the configured mirror (which should fail as incorrect credentials for
+		// this registry) and then against the origin registry.
+		authMap[globbedDomain] = mirrorAuthConfig
+	case v1alpha1.MirrorCredentialsFirst:
+		// Set mirror credentials for image to ensure that the mirror credentials are used first, and set any existing
+		// origin credentials for the globbed domain to ensure they are used last (glob matches have lowest precedence).
+		//
+		// This means that the kubelet will first try the origin credentials, which containerd will try against both the
+		// configured mirror in containerd (which should fail as incorrect credentials for this registry) and the origin
+		// registry.
+		//
+		// If containerd fails to pull using the origin credentials, then the kubelet will try the mirror credentials,
+		// which containerd will try first against the configured mirror and then against the origin registry (which
+		// should fail as incorrect credentials for this registry) if the image is not found in the mirror.
+		existing, found := authMap[img]
+		if found {
+			authMap[globbedDomain] = existing
+		}
+		authMap[img] = mirrorAuthConfig
+	default:
+		return fmt.Errorf(
+			"%w: %q",
+			ErrUnsupportedMirrorCredentialStrategy,
+			mirrorCredentialsStrategy,
+		)
+	}
+
+	return nil
+}
+
 func (p *shimProvider) getMirrorCredentialsForImage(
 	img string,
-) (*credentialproviderv1beta1.CredentialProviderResponse, bool, error) {
+) (credentialproviderv1beta1.AuthConfig, time.Duration, bool, error) {
 	// If mirror is not configured then return no credentials for the mirror.
 	if p.cfg.Mirror == nil {
-		return nil, false, nil
+		return credentialproviderv1beta1.AuthConfig{}, 0, false, nil
 	}
 
 	imgURL, err := urlglobber.ParseSchemelessURL(img)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to parse image %q to a URL: %w", img, err)
+		return credentialproviderv1beta1.AuthConfig{}, 0, false, fmt.Errorf(
+			"failed to parse image %q to a URL: %w",
+			img,
+			err,
+		)
 	}
 
 	mirrorURL, err := urlglobber.ParseSchemelessURL(p.cfg.Mirror.Endpoint)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to parse mirror %q to a URL: %w", img, err)
+		return credentialproviderv1beta1.AuthConfig{}, 0, false, fmt.Errorf(
+			"failed to parse mirror %q to a URL: %w",
+			img,
+			err,
+		)
 	}
 
 	imgURL.Host = mirrorURL.Host
@@ -255,16 +268,19 @@ func (p *shimProvider) getMirrorCredentialsForImage(
 
 func (p *shimProvider) getCredentialsForImage(
 	img string,
-) (*credentialproviderv1beta1.CredentialProviderResponse, bool, error) {
+) (credentialproviderv1beta1.AuthConfig, time.Duration, bool, error) {
 	// If only mirror credentials should be used then return no credentials for the origin.
 	if isRegistryCredentialsOnly(p.cfg.Mirror) {
-		return nil, false, nil
+		return credentialproviderv1beta1.AuthConfig{}, 0, false, nil
 	}
 
 	for _, prov := range p.providers {
 		resp, err := prov.Provide(img)
 		if err != nil {
-			return nil, false, fmt.Errorf("failed to call plugin: %w", err)
+			return credentialproviderv1beta1.AuthConfig{}, 0, false, fmt.Errorf(
+				"failed to call plugin: %w",
+				err,
+			)
 		}
 
 		if resp == nil || len(resp.Auth) == 0 {
@@ -273,15 +289,31 @@ func (p *shimProvider) getCredentialsForImage(
 
 		v1beta1Resp := &credentialproviderv1beta1.CredentialProviderResponse{}
 		if err := scheme.Convert(resp, v1beta1Resp, nil); err != nil {
-			return nil,
+			return credentialproviderv1beta1.AuthConfig{},
+				0,
 				false,
-				fmt.Errorf("failed to convert response from type %T to type %T: %w", resp, v1beta1Resp, err)
+				fmt.Errorf(
+					"failed to convert response from type %T to type %T: %w",
+					resp,
+					v1beta1Resp,
+					err,
+				)
 		}
 
-		return v1beta1Resp, true, nil
+		cacheDuration := prov.DefaultCacheDuration()
+		if v1beta1Resp.CacheDuration != nil {
+			cacheDuration = v1beta1Resp.CacheDuration.Duration
+		}
+
+		authConfig, err := singleAuthFromResponse(v1beta1Resp)
+		if err != nil {
+			return credentialproviderv1beta1.AuthConfig{}, 0, false, err
+		}
+
+		return authConfig, cacheDuration, true, nil
 	}
 
-	return nil, false, nil
+	return credentialproviderv1beta1.AuthConfig{}, 0, false, nil
 }
 
 func isRegistryCredentialsOnly(cfg *v1alpha1.MirrorConfig) bool {
