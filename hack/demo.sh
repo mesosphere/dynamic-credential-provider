@@ -129,6 +129,7 @@ providers:
   - "-c"
   - "/etc/kubernetes/shim-credential-provider-config.yaml"
   matchImages:
+  - "*:5000"
   - "*"
   - "*.*"
   - "*.*.*"
