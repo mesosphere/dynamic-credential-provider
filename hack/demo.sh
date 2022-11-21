@@ -10,15 +10,6 @@ readonly ROOT_DIR="${SCRIPT_DIR}/.."
 readonly DEMODATA_DIR="${ROOT_DIR}/demodata"
 rm -rf "${DEMODATA_DIR}" && mkdir -p "${DEMODATA_DIR}"
 
-export KIND_EXPERIMENTAL_DOCKER_NETWORK=shim-credentials-kind-network
-
-docker network create "${KIND_EXPERIMENTAL_DOCKER_NETWORK}" --subnet 172.254.0.0/24 --gateway 172.254.0.1 || true
-
-REGISTRY_IP=$(docker network inspect "${KIND_EXPERIMENTAL_DOCKER_NETWORK}" |
-  gojq -r '.[].IPAM.Config[].Subnet |
-                          capture("^(?<octet1and2>(?:\\d{1,3}\\.){2})(?:\\d{1,3})\\.(?:\\d{1,3})/(?:\\d{1,3})$") |
-                          .octet1and2 + "0.10"')
-
 REGISTRY_PORT=5000
 # Use a domain so it can be access on a Mac
 REGISTRY_ADDRESS=registry
@@ -35,10 +26,7 @@ OPENSSL_BIN="${OPENSSL_BIN:=openssl}"
 
 ${OPENSSL_BIN} req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
   -keyout "${REGISTRY_CERTS_DIR}/ca.key" -out "${REGISTRY_CERTS_DIR}/ca.crt" -subj "/CN=${REGISTRY_ADDRESS}" \
-  -addext "subjectAltName=DNS:${REGISTRY_ADDRESS},IP:${REGISTRY_IP}"
-
-sudo mkdir -p "/etc/docker/certs.d/${REGISTRY_IP}:${REGISTRY_PORT}"
-sudo cp -f "${REGISTRY_CERTS_DIR}/ca.crt" "/etc/docker/certs.d/${REGISTRY_IP}:${REGISTRY_PORT}"
+  -addext "subjectAltName=DNS:${REGISTRY_ADDRESS}"
 
 rm -rf "${REGISTRY_AUTH_DIR}"
 mkdir -p "${REGISTRY_AUTH_DIR}"
@@ -49,10 +37,8 @@ docker container run --rm \
 docker container rm -fv registry || true
 docker container run --rm -d \
   --name registry \
-  --ip "${REGISTRY_IP}" \
-  --network "${KIND_EXPERIMENTAL_DOCKER_NETWORK}" \
+  --network kind \
   -v "${REGISTRY_CERTS_DIR}":/certs \
-  -e REGISTRY_HTTP_ADDR="${REGISTRY_IP}:${REGISTRY_PORT}" \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/ca.crt \
   -e REGISTRY_HTTP_TLS_KEY=/certs/ca.key \
   -v "${REGISTRY_AUTH_DIR}":/auth \
@@ -236,14 +222,14 @@ kind delete clusters image-credential-provider-test || true
 kind create cluster --config="${DEMODATA_DIR}/kind-config.yaml" --name image-credential-provider-test
 
 docker image pull nginx:latest
-docker image tag docker.io/library/nginx:latest "${REGISTRY_IP}:${REGISTRY_PORT}/library/nginx:latest"
+docker image tag docker.io/library/nginx:latest "localhost:${REGISTRY_PORT}/library/nginx:latest"
 
-echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USERNAME}" --password-stdin "${REGISTRY_IP}:${REGISTRY_PORT}"
-docker image push "${REGISTRY_IP}:${REGISTRY_PORT}/library/nginx:latest"
+echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USERNAME}" --password-stdin "localhost:${REGISTRY_PORT}"
+docker image push "localhost:${REGISTRY_PORT}/library/nginx:latest"
 
 # Retag and push with a tag that doesn't exist in docker.io to test Containerd mirror config
-docker image tag docker.io/library/nginx:latest "${REGISTRY_IP}:${REGISTRY_PORT}/library/nginx:$(whoami)"
-docker image push "${REGISTRY_IP}:${REGISTRY_PORT}/library/nginx:$(whoami)"
+docker image tag docker.io/library/nginx:latest "localhost:${REGISTRY_PORT}/library/nginx:$(whoami)"
+docker image push "localhost:${REGISTRY_PORT}/library/nginx:$(whoami)"
 
 # Wait for KIND to startup
 sleep 10s
