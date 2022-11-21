@@ -10,7 +10,7 @@ readonly ROOT_DIR="${SCRIPT_DIR}/.."
 readonly DEMODATA_DIR="${ROOT_DIR}/demodata"
 rm -rf "${DEMODATA_DIR}" && mkdir -p "${DEMODATA_DIR}"
 
-export KIND_EXPERIMENTAL_DOCKER_NETWORK=kind-airgapped
+export KIND_EXPERIMENTAL_DOCKER_NETWORK=shim-credentials-airgapped-kind-network
 
 docker network create --internal "${KIND_EXPERIMENTAL_DOCKER_NETWORK}" --subnet 172.255.0.0/24 --gateway 172.255.0.1 || true
 
@@ -210,9 +210,7 @@ cp "${ROOT_DIR}/dist/shim-credential-provider_linux_amd64_v1/shim-credential-pro
 cat <<EOF >"${DEMODATA_DIR}/kind-config.yaml"
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-- role: control-plane
-  kubeadmConfigPatches:
+kubeadmConfigPatches:
   - |
     kind: InitConfiguration
     nodeRegistration:
@@ -220,16 +218,18 @@ nodes:
         image-credential-provider-config: /etc/kubernetes/image-credential-provider-config.yaml
         image-credential-provider-bin-dir: /etc/kubernetes/image-credential-provider/
         v: "6"
-  extraMounts:
-  - hostPath: ${DEMODATA_DIR}/containerd-config.toml
-    containerPath: /etc/containerd/config.toml
-  - hostPath: ${DEMODATA_DIR}/image-credential-provider-config.yaml
-    containerPath: /etc/kubernetes/image-credential-provider-config.yaml
-  - hostPath: ${DEMODATA_DIR}/shim-credential-provider-config.yaml
-    containerPath: /etc/kubernetes/shim-credential-provider-config.yaml
-  # this directory and any configured providers need to exist during Kubelet's startup
-  - hostPath: ${DEMODATA_DIR}/image-credential-provider/
-    containerPath: /etc/kubernetes/image-credential-provider/
+nodes:
+  - role: control-plane
+    extraMounts:
+    - hostPath: ${DEMODATA_DIR}/containerd-config.toml
+      containerPath: /etc/containerd/config.toml
+    - hostPath: ${DEMODATA_DIR}/image-credential-provider-config.yaml
+      containerPath: /etc/kubernetes/image-credential-provider-config.yaml
+    - hostPath: ${DEMODATA_DIR}/shim-credential-provider-config.yaml
+      containerPath: /etc/kubernetes/shim-credential-provider-config.yaml
+    # this directory and any configured providers need to exist during Kubelet's startup
+    - hostPath: ${DEMODATA_DIR}/image-credential-provider/
+      containerPath: /etc/kubernetes/image-credential-provider/
 EOF
 
 kind delete clusters airgapped-image-credential-provider-test || true

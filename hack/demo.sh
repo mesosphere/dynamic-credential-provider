@@ -10,9 +10,11 @@ readonly ROOT_DIR="${SCRIPT_DIR}/.."
 readonly DEMODATA_DIR="${ROOT_DIR}/demodata"
 rm -rf "${DEMODATA_DIR}" && mkdir -p "${DEMODATA_DIR}"
 
-docker network create kind || true
+export KIND_EXPERIMENTAL_DOCKER_NETWORK=shim-credentials-kind-network
 
-REGISTRY_IP=$(docker network inspect kind |
+docker network create "${KIND_EXPERIMENTAL_DOCKER_NETWORK}" --subnet 172.254.0.0/24 --gateway 172.254.0.1 || true
+
+REGISTRY_IP=$(docker network inspect "${KIND_EXPERIMENTAL_DOCKER_NETWORK}" |
   gojq -r '.[].IPAM.Config[].Subnet |
                           capture("^(?<octet1and2>(?:\\d{1,3}\\.){2})(?:\\d{1,3})\\.(?:\\d{1,3})/(?:\\d{1,3})$") |
                           .octet1and2 + "0.10"')
@@ -48,7 +50,7 @@ docker container rm -fv registry || true
 docker container run --rm -d \
   --name registry \
   --ip "${REGISTRY_IP}" \
-  --network kind \
+  --network "${KIND_EXPERIMENTAL_DOCKER_NETWORK}" \
   -v "${REGISTRY_CERTS_DIR}":/certs \
   -e REGISTRY_HTTP_ADDR="${REGISTRY_IP}:${REGISTRY_PORT}" \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/ca.crt \
@@ -208,9 +210,7 @@ cp "${ROOT_DIR}/dist/shim-credential-provider_linux_amd64_v1/shim-credential-pro
 cat <<EOF >"${DEMODATA_DIR}/kind-config.yaml"
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-- role: control-plane
-  kubeadmConfigPatches:
+kubeadmConfigPatches:
   - |
     kind: InitConfiguration
     nodeRegistration:
@@ -218,16 +218,18 @@ nodes:
         image-credential-provider-config: /etc/kubernetes/image-credential-provider-config.yaml
         image-credential-provider-bin-dir: /etc/kubernetes/image-credential-provider/
         v: "6"
-  extraMounts:
-  - hostPath: ${DEMODATA_DIR}/containerd-config.toml
-    containerPath: /etc/containerd/config.toml
-  - hostPath: ${DEMODATA_DIR}/image-credential-provider-config.yaml
-    containerPath: /etc/kubernetes/image-credential-provider-config.yaml
-  - hostPath: ${DEMODATA_DIR}/shim-credential-provider-config.yaml
-    containerPath: /etc/kubernetes/shim-credential-provider-config.yaml
-  # this directory and any configured providers need to exist during Kubelet's startup
-  - hostPath: ${DEMODATA_DIR}/image-credential-provider/
-    containerPath: /etc/kubernetes/image-credential-provider/
+nodes:
+  - role: control-plane
+    extraMounts:
+    - hostPath: ${DEMODATA_DIR}/containerd-config.toml
+      containerPath: /etc/containerd/config.toml
+    - hostPath: ${DEMODATA_DIR}/image-credential-provider-config.yaml
+      containerPath: /etc/kubernetes/image-credential-provider-config.yaml
+    - hostPath: ${DEMODATA_DIR}/shim-credential-provider-config.yaml
+      containerPath: /etc/kubernetes/shim-credential-provider-config.yaml
+    # this directory and any configured providers need to exist during Kubelet's startup
+    - hostPath: ${DEMODATA_DIR}/image-credential-provider/
+      containerPath: /etc/kubernetes/image-credential-provider/
 EOF
 
 kind delete clusters image-credential-provider-test || true
