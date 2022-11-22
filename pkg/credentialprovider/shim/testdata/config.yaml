@@ -5,7 +5,7 @@ apiVersion: config.kubeletimagecredentialprovidershim.d2iq.com/v1alpha1
 kind: KubeletImageCredentialProviderShimConfig
 credentialProviderPluginBinDir: testdata
 credentialProviders:
-  apiVersion: kubelet.config.k8s.io/v1beta2
+  apiVersion: kubelet.config.k8s.io/v1beta1
   kind: CredentialProviderConfig
   providers:
   - name: staticcredentialprovider-v1alpha1.sh
