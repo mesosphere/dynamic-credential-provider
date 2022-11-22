@@ -217,14 +217,14 @@ kind delete clusters image-credential-provider-test || true
 kind create cluster --config="${DEMODATA_DIR}/kind-config.yaml" --name image-credential-provider-test
 
 docker image pull nginx:latest
-docker image tag docker.io/library/nginx:latest "localhost:${REGISTRY_PORT}/library/nginx:latest"
+docker image tag docker.io/library/nginx:latest "127.0.0.1:${REGISTRY_PORT}/library/nginx:latest"
 
-echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USERNAME}" --password-stdin "localhost:${REGISTRY_PORT}"
-docker image push "localhost:${REGISTRY_PORT}/library/nginx:latest"
+echo "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USERNAME}" --password-stdin "127.0.0.1:${REGISTRY_PORT}"
+docker image push "127.0.0.1:${REGISTRY_PORT}/library/nginx:latest"
 
 # Retag and push with a tag that doesn't exist in docker.io to test Containerd mirror config
-docker image tag docker.io/library/nginx:latest "localhost:${REGISTRY_PORT}/library/nginx:$(whoami)"
-docker image push "localhost:${REGISTRY_PORT}/library/nginx:$(whoami)"
+docker image tag docker.io/library/nginx:latest "127.0.0.1:${REGISTRY_PORT}/library/nginx:$(whoami)"
+docker image push "127.0.0.1:${REGISTRY_PORT}/library/nginx:$(whoami)"
 
 # Wait for KIND to startup
 sleep 10s
