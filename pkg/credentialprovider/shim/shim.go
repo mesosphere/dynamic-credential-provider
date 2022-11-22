@@ -171,21 +171,6 @@ func (p *shimProvider) GetCredentials(
 	}, nil
 }
 
-func singleAuthFromResponse(resp *credentialproviderv1beta1.CredentialProviderResponse) (
-	credentialproviderv1beta1.AuthConfig, error,
-) {
-	if len(resp.Auth) > 1 {
-		return credentialproviderv1beta1.AuthConfig{},
-			fmt.Errorf("%w: %d (expected 1)", ErrTooManyCredentials, len(resp.Auth))
-	}
-
-	for _, v := range resp.Auth {
-		return v, nil
-	}
-
-	return credentialproviderv1beta1.AuthConfig{}, nil
-}
-
 func updateAuthConfigMapForMirror(
 	authMap map[string]credentialproviderv1beta1.AuthConfig,
 	img string,
@@ -273,9 +258,11 @@ func (p *shimProvider) getMirrorCredentialsForImage(
 	return p.getCredentialsForImage(strings.TrimPrefix(imgURL.String(), "//"))
 }
 
-func (p *shimProvider) getCredentialsForImage(
-	img string,
-) (credentialproviderv1beta1.AuthConfig, time.Duration, bool, error) {
+func (p *shimProvider) getCredentialsForImage(img string) (
+	authConfig credentialproviderv1beta1.AuthConfig, cacheDuration time.Duration, found bool, err error,
+) {
+	var longestMatchedURL string
+
 	for _, prov := range p.providers {
 		resp, err := prov.Provide(img)
 		if err != nil {
@@ -285,7 +272,7 @@ func (p *shimProvider) getCredentialsForImage(
 			)
 		}
 
-		if resp == nil || len(resp.Auth) == 0 {
+		if resp == nil {
 			continue
 		}
 
@@ -302,20 +289,23 @@ func (p *shimProvider) getCredentialsForImage(
 				)
 		}
 
-		cacheDuration := prov.DefaultCacheDuration()
-		if v1beta1Resp.CacheDuration != nil {
-			cacheDuration = v1beta1Resp.CacheDuration.Duration
-		}
+		for k, v := range v1beta1Resp.Auth {
+			if matched, _ := urlglobber.URLsMatchStr(k, img); !matched {
+				continue
+			}
 
-		authConfig, err := singleAuthFromResponse(v1beta1Resp)
-		if err != nil {
-			return credentialproviderv1beta1.AuthConfig{}, 0, false, err
+			if len(longestMatchedURL) < len(k) || longestMatchedURL < k {
+				longestMatchedURL = k
+				authConfig = v
+				cacheDuration = prov.DefaultCacheDuration()
+				if resp.CacheDuration != nil {
+					cacheDuration = v1beta1Resp.CacheDuration.Duration
+				}
+			}
 		}
-
-		return authConfig, cacheDuration, true, nil
 	}
 
-	return credentialproviderv1beta1.AuthConfig{}, 0, false, nil
+	return authConfig, cacheDuration, len(longestMatchedURL) > 0, nil
 }
 
 func isRegistryCredentialsOnly(cfg *v1alpha1.MirrorConfig) bool {
