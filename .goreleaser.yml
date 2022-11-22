@@ -1,7 +1,7 @@
 # Copyright 2022 D2iQ, Inc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-project_name: kubelet-image-credential-provider-shim
+project_name: shim-credential-provider
 
 changelog:
   use: github
@@ -24,8 +24,8 @@ release:
     **Full Changelog**: https://github.com/mesosphere/kubelet-image-credential-provider-shim/compare/{{ .PreviousTag }}...{{ .Tag }}
 
 builds:
-  - id: kubelet-image-credential-provider-shim
-    dir: ./cmd/kubelet-image-credential-provider-shim
+  - id: shim-credential-provider
+    dir: ./cmd/shim-credential-provider
     env:
       - CGO_ENABLED=0
     flags:
@@ -90,60 +90,21 @@ dockers:
   - image_templates:
       # Specify the image tag including `-amd64` suffix if the build is not a snapshot build or is not being built on
       # arm64 machine. This allows for using the snapshot image build without the archtecture specific suffix
-      # consistently on local machines, i.e. can always use `mesosphere/kubelet-image-credential-provider-shim:v<VERSION>` on the machine the snapshot
+      # consistently on local machines, i.e. can always use `mesosphere/shim-credential-provider:v<VERSION>` on the machine the snapshot
       # is built on.
       #
       # For a release build the `-amd64` suffix will always be included and the `docker_manifests` specification below
       # will create the final multiplatform manifest to be pushed to the registry.
-      - 'mesosphere/kubelet-image-credential-provider-shim:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "amd64")) }}-amd64{{ end }}'
+      - 'mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "amd64")) }}-amd64{{ end }}'
     use: buildx
     dockerfile: Dockerfile
-    build_flag_templates:
-      - "--platform=linux/amd64"
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title=kubelet-image-credential-provider-shim"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-  - image_templates:
-      # Specify the image tag including `-amd64v8` suffix if the build is not a snapshot build or is not being built on
-      # arm64 machine. This allows for using the snapshot image build without the archtecture specific suffix
-      # consistently on local machines, i.e. can always use `mesosphere/kubelet-image-credential-provider-shim:v<VERSION>` on the machine the snapshot
-      # is built on.
-      #
-      # For a release build the `-amd64v8` suffix will always be included and the `docker_manifests` specification below
-      # will create the final multiplatform manifest to be pushed to the registry.
-    - 'mesosphere/kubelet-image-credential-provider-shim:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "arm64")) }}-arm64v8{{ end }}'
-    use: buildx
-    goarch: arm64
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - "--platform=linux/arm64"
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title=kubelet-image-credential-provider-shim"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-  - image_templates:
-      # Specify the image tag including `-amd64` suffix if the build is not a snapshot build or is not being built on
-      # arm64 machine. This allows for using the snapshot image build without the archtecture specific suffix
-      # consistently on local machines, i.e. can always use `mesosphere/kubelet-image-credential-provider-installer:v<VERSION>` on the machine the snapshot
-      # is built on.
-      #
-      # For a release build the `-amd64` suffix will always be included and the `docker_manifests` specification below
-      # will create the final multiplatform manifest to be pushed to the registry.
-      - 'mesosphere/kubelet-image-credential-provider-installer:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "amd64")) }}-amd64{{ end }}'
-    use: buildx
-    dockerfile: Dockerfile.credential-providers-installer
     extra_files:
       - credential-providers
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title=kubelet-image-credential-provider-installer"
+      - "--label=org.opencontainers.image.title=shim-credential-provider"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
@@ -152,36 +113,32 @@ dockers:
   - image_templates:
       # Specify the image tag including `-amd64v8` suffix if the build is not a snapshot build or is not being built on
       # arm64 machine. This allows for using the snapshot image build without the archtecture specific suffix
-      # consistently on local machines, i.e. can always use `mesosphere/kubelet-image-credential-provider-installer:v<VERSION>` on the machine the snapshot
+      # consistently on local machines, i.e. can always use `mesosphere/shim-credential-provider:v<VERSION>` on the machine the snapshot
       # is built on.
       #
       # For a release build the `-amd64v8` suffix will always be included and the `docker_manifests` specification below
       # will create the final multiplatform manifest to be pushed to the registry.
-    - 'mesosphere/kubelet-image-credential-provider-installer:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "arm64")) }}-arm64v8{{ end }}'
+    - 'mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "arm64")) }}-arm64v8{{ end }}'
     use: buildx
     goarch: arm64
-    dockerfile: Dockerfile.credential-providers-installer
+    dockerfile: Dockerfile
     extra_files:
       - credential-providers
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title=kubelet-image-credential-provider-installer"
+      - "--label=org.opencontainers.image.title=shim-credential-provider"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--build-arg=GO_VERSION={{.Env.GO_VERSION}}"
       - "--build-arg=CLOUD_PROVIDER_GCP_VERSION={{.Env.CLOUD_PROVIDER_GCP_VERSION}}"
 docker_manifests:
-  - name_template: mesosphere/kubelet-image-credential-provider-shim:v{{trimprefix .Version "v"}}
+  - name_template: mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}
     image_templates:
-    - mesosphere/kubelet-image-credential-provider-shim:v{{trimprefix .Version "v"}}-amd64
-    - mesosphere/kubelet-image-credential-provider-shim:v{{trimprefix .Version "v"}}-arm64v8
-  - name_template: mesosphere/kubelet-image-credential-provider-installer:v{{trimprefix .Version "v"}}
-    image_templates:
-    - mesosphere/kubelet-image-credential-provider-installer:v{{trimprefix .Version "v"}}-amd64
-    - mesosphere/kubelet-image-credential-provider-installer:v{{trimprefix .Version "v"}}-arm64v8
+    - mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}-amd64
+    - mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}-arm64v8
 checksum:
   name_template: 'checksums.txt'
 snapshot:

@@ -29,7 +29,7 @@ import (
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
 )
 
-var apiVersions = map[string]schema.GroupVersion{
+var APIVersions = map[string]schema.GroupVersion{
 	credentialproviderv1alpha1.SchemeGroupVersion.String(): credentialproviderv1alpha1.SchemeGroupVersion,
 	credentialproviderv1beta1.SchemeGroupVersion.String():  credentialproviderv1beta1.SchemeGroupVersion,
 }
@@ -105,9 +105,9 @@ func validateCredentialProviderConfig(
 				allErrs,
 				field.Required(providerFieldPath.Child("apiVersion"), "apiVersion is required"),
 			)
-		} else if _, ok := apiVersions[provider.APIVersion]; !ok {
+		} else if _, ok := APIVersions[provider.APIVersion]; !ok {
 			validAPIVersions := []string{}
-			for apiVersion := range apiVersions {
+			for apiVersion := range APIVersions {
 				validAPIVersions = append(validAPIVersions, apiVersion)
 			}
 

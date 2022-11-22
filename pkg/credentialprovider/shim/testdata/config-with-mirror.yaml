@@ -1,0 +1,25 @@
+# Copyright 2022 D2iQ, Inc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: config.kubeletimagecredentialprovidershim.d2iq.com/v1alpha1
+kind: KubeletImageCredentialProviderShimConfig
+mirror:
+  endpoint: someregistry.com
+  credentialsStrategy: MirrorCredentialsFirst
+credentialProviderPluginBinDir: testdata
+credentialProviders:
+  apiVersion: kubelet.config.k8s.io/v1beta2
+  kind: CredentialProviderConfig
+  providers:
+  - name: staticcredentialprovider-v1alpha1.sh
+    matchImages:
+      - '*.v1alpha1'
+    apiVersion: credentialprovider.kubelet.k8s.io/v1alpha1
+  - name: staticcredentialprovider-v1beta1.sh
+    matchImages:
+      - '*.v1beta1'
+    apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+  - name: staticcredentialprovider-mirror.sh
+    matchImages:
+      - someregistry.com
+    apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
