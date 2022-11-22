@@ -131,9 +131,16 @@ func (p *shimProvider) GetCredentials(
 		return nil, fmt.Errorf("failed to get mirror credentials: %w", err)
 	}
 
-	originAuthConfig, originCacheDuration, originAuthFound, err := p.getCredentialsForImage(img)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get origin credentials: %w", err)
+	var (
+		originAuthConfig    credentialproviderv1beta1.AuthConfig
+		originCacheDuration time.Duration
+		originAuthFound     bool
+	)
+	if !isRegistryCredentialsOnly(p.cfg.Mirror) {
+		originAuthConfig, originCacheDuration, originAuthFound, err = p.getCredentialsForImage(img)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get origin credentials: %w", err)
+		}
 	}
 
 	if originAuthFound {
@@ -269,11 +276,6 @@ func (p *shimProvider) getMirrorCredentialsForImage(
 func (p *shimProvider) getCredentialsForImage(
 	img string,
 ) (credentialproviderv1beta1.AuthConfig, time.Duration, bool, error) {
-	// If only mirror credentials should be used then return no credentials for the origin.
-	if isRegistryCredentialsOnly(p.cfg.Mirror) {
-		return credentialproviderv1beta1.AuthConfig{}, 0, false, nil
-	}
-
 	for _, prov := range p.providers {
 		resp, err := prov.Provide(img)
 		if err != nil {
