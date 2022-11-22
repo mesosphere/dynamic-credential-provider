@@ -28,11 +28,14 @@ import (
 	"strings"
 )
 
-// ParseSchemelessURL parses a schemeless url and returns a url.URL
+// ParsePotentiallySchemelessURL parses a schemeless url and returns a url.URL
 // url.Parse require a scheme, but ours don't have schemes.  Adding a
 // scheme to make url.Parse happy, then clear out the resulting scheme.
-func ParseSchemelessURL(schemelessURL string) (*url.URL, error) {
-	parsed, err := url.Parse("https://" + schemelessURL)
+func ParsePotentiallySchemelessURL(u string) (*url.URL, error) {
+	if !(strings.HasPrefix(u, "https://") || strings.HasPrefix(u, "http://")) {
+		u = "https://" + u
+	}
+	parsed, err := url.Parse(u)
 	if err != nil {
 		return nil, err
 	}
@@ -53,11 +56,11 @@ func SplitURL(u *url.URL) (parts []string, port string) {
 
 // URLsMatchStr is wrapper for URLsMatch, operating on strings instead of URLs.
 func URLsMatchStr(glob, target string) (bool, error) {
-	globURL, err := ParseSchemelessURL(glob)
+	globURL, err := ParsePotentiallySchemelessURL(glob)
 	if err != nil {
 		return false, err
 	}
-	targetURL, err := ParseSchemelessURL(target)
+	targetURL, err := ParsePotentiallySchemelessURL(target)
 	if err != nil {
 		return false, err
 	}
