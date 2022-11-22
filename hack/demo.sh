@@ -147,20 +147,17 @@ credentialProviders:
   - name: static-docker-io-credential-provider
     matchImages:
     - "docker.io"
+    args:
+    - /etc/kubernetes/docker-image-credentials.json
     defaultCacheDuration: "0s"
     apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
 EOF
 
+mkdir -p "${DEMODATA_DIR}/etc/kubernetes/"
 mkdir -p "${DEMODATA_DIR}/image-credential-provider/"
 
-cat <<EOF >"${DEMODATA_DIR}/image-credential-provider/static-mirror-credential-provider"
-#!/usr/bin/env bash
-
-echo "Got Request: " >> /etc/kubernetes/image-credential-provider/req.txt
-echo "\$(</dev/stdin)" >> /etc/kubernetes/image-credential-provider/req.txt
-
-# This is an initial provider that returns a dummy reponse and will be replaced after the cluster starts up
-echo '{
+cat <<EOF >"${DEMODATA_DIR}/etc/kubernetes/image-credentials.json"
+{
   "kind":"CredentialProviderResponse",
   "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
   "cacheKeyType":"Registry",
@@ -168,18 +165,12 @@ echo '{
   "auth":{
     "${REGISTRY_ADDRESS}:${REGISTRY_PORT}": {"username":"${REGISTRY_USERNAME}","password":"${REGISTRY_PASSWORD}"}
   }
-}'
+}
 EOF
-chmod +x "${DEMODATA_DIR}/image-credential-provider/static-mirror-credential-provider"
+cp "${ROOT_DIR}/dist/static-credential-provider_linux_amd64_v1/static-credential-provider" "${DEMODATA_DIR}/image-credential-provider/static-mirror-credential-provider"
 
-cat <<EOF >"${DEMODATA_DIR}/image-credential-provider/static-docker-io-credential-provider"
-#!/usr/bin/env bash
-
-echo "Got Request: " >> /etc/kubernetes/image-credential-provider/req.txt
-echo "\$(</dev/stdin)" >> /etc/kubernetes/image-credential-provider/req.txt
-
-# This is an initial provider that returns a dummy reponse and will be replaced after the cluster starts up
-echo '{
+cat <<EOF >"${DEMODATA_DIR}/etc/kubernetes/docker-image-credentials.json"
+{
   "kind":"CredentialProviderResponse",
   "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
   "cacheKeyType":"Image",
@@ -187,9 +178,9 @@ echo '{
   "auth":{
     "docker.io": {"username":"","password":""}
   }
-}'
+}
 EOF
-chmod +x "${DEMODATA_DIR}/image-credential-provider/static-docker-io-credential-provider"
+cp "${ROOT_DIR}/dist/static-credential-provider_linux_amd64_v1/static-credential-provider" "${DEMODATA_DIR}/image-credential-provider/static-docker-io-credential-provider"
 
 cp "${ROOT_DIR}/dist/shim-credential-provider_linux_amd64_v1/shim-credential-provider" "${DEMODATA_DIR}/image-credential-provider/"
 
@@ -216,6 +207,10 @@ nodes:
     # this directory and any configured providers need to exist during Kubelet's startup
     - hostPath: ${DEMODATA_DIR}/image-credential-provider/
       containerPath: /etc/kubernetes/image-credential-provider/
+    - hostPath: ${DEMODATA_DIR}/etc/kubernetes/image-credentials.json
+      containerPath: /etc/kubernetes/image-credentials.json
+    - hostPath: ${DEMODATA_DIR}/etc/kubernetes/docker-image-credentials.json
+      containerPath: /etc/kubernetes/docker-image-credentials.json
 EOF
 
 kind delete clusters image-credential-provider-test || true
