@@ -42,7 +42,7 @@ func init() {
 type shimProvider struct {
 	cfg *v1alpha1.KubeletImageCredentialProviderShimConfig
 
-	providersMutex sync.Mutex
+	providersMutex sync.RWMutex
 	providers      map[string]Provider
 }
 
@@ -117,13 +117,14 @@ func (p *shimProvider) registerCredentialProvider(name string, provider *pluginP
 	p.providers[name] = provider
 }
 
-var ErrTooManyCredentials = errors.New("too many credentials")
-
 func (p *shimProvider) GetCredentials(
 	_ context.Context,
 	img string,
 	_ []string,
 ) (*credentialproviderv1beta1.CredentialProviderResponse, error) {
+	p.providersMutex.RLock()
+	defer p.providersMutex.RUnlock()
+
 	authMap := map[string]credentialproviderv1beta1.AuthConfig{}
 
 	mirrorAuthConfig, cacheDuration, mirrorAuthFound, err := p.getMirrorCredentialsForImage(img)
