@@ -116,6 +116,12 @@ func TestURLsMatch(t *testing.T) {
 			targetURL:     prefixKubernetesIO + ":1111/foo/bar",
 			matchExpected: false,
 		},
+		// match when there is a scheme specified.
+		{
+			globURL:       "https://*.kubernetes.io",
+			targetURL:     prefixKubernetesIO,
+			matchExpected: true,
+		},
 	}
 	for _, test := range tests {
 		matched, _ := urlglobber.URLsMatchStr(test.globURL, test.targetURL)

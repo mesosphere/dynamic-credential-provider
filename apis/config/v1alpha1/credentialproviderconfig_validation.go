@@ -128,7 +128,7 @@ func validateCredentialProviderConfig(
 		}
 
 		for _, matchImage := range provider.MatchImages {
-			if _, err := urlglobber.ParseSchemelessURL(matchImage); err != nil {
+			if _, err := urlglobber.ParsePotentiallySchemelessURL(matchImage); err != nil {
 				allErrs = append(
 					allErrs,
 					field.Invalid(

@@ -234,7 +234,7 @@ func (p *shimProvider) getMirrorCredentialsForImage(
 		return credentialproviderv1beta1.AuthConfig{}, 0, false, nil
 	}
 
-	imgURL, err := urlglobber.ParseSchemelessURL(img)
+	imgURL, err := urlglobber.ParsePotentiallySchemelessURL(img)
 	if err != nil {
 		return credentialproviderv1beta1.AuthConfig{}, 0, false, fmt.Errorf(
 			"failed to parse image %q to a URL: %w",
@@ -243,7 +243,7 @@ func (p *shimProvider) getMirrorCredentialsForImage(
 		)
 	}
 
-	mirrorURL, err := urlglobber.ParseSchemelessURL(p.cfg.Mirror.Endpoint)
+	mirrorURL, err := urlglobber.ParsePotentiallySchemelessURL(p.cfg.Mirror.Endpoint)
 	if err != nil {
 		return credentialproviderv1beta1.AuthConfig{}, 0, false, fmt.Errorf(
 			"failed to parse mirror %q to a URL: %w",
