@@ -97,22 +97,6 @@ kubectl create configmap tigera-operator \
       --slurp \
       --indent=0 \
       '[ .[] | select( . != null ) | (select(.kind == "Namespace").metadata.labels={"pod-security.kubernetes.io/enforce": "privileged"}) ]')
-kubectl apply -f <(
-  cat <<EOF
-apiVersion: addons.cluster.x-k8s.io/v1beta1
-kind: ClusterResourceSet
-metadata:
-  name: tigera-operator
-spec:
-  clusterSelector:
-    matchLabels:
-      cni: calico
-  resources:
-    - kind: ConfigMap
-      name: tigera-operator
-EOF
-)
-
 kubectl create configmap calico-installation --from-file=custom-resources.yaml=<(
   cat <<EOF
 apiVersion: v1
@@ -143,12 +127,14 @@ kubectl apply -f <(
 apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
 metadata:
-  name: calico-installation
+  name: calico-cni
 spec:
   clusterSelector:
     matchLabels:
       cni: calico
   resources:
+    - kind: ConfigMap
+      name: tigera-operator
     - kind: ConfigMap
       name: calico-installation
 EOF
