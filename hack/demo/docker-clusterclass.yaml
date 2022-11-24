@@ -1,0 +1,727 @@
+# Copyright 2022 D2iQ, Inc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: ClusterClass
+metadata:
+  name: shim-demo
+spec:
+  controlPlane:
+    ref:
+      apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+      kind: KubeadmControlPlaneTemplate
+      name: shim-demo-control-plane
+    machineInfrastructure:
+      ref:
+        kind: DockerMachineTemplate
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        name: shim-demo-control-plane
+  infrastructure:
+    ref:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: DockerClusterTemplate
+      name: shim-demo-cluster
+  workers:
+    machineDeployments:
+      - class: default-worker
+        template:
+          bootstrap:
+            ref:
+              apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+              kind: KubeadmConfigTemplate
+              name: shim-demo-default-worker-bootstraptemplate
+          infrastructure:
+            ref:
+              apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+              kind: DockerMachineTemplate
+              name: shim-demo-default-worker-machinetemplate
+  variables:
+    - name: kindNodeImageRepository
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: string
+          default: "kindest/node"
+          example: "mesosphere/kind-node"
+          description: "custom image to use for the KinD nodes."
+    - name: imageRepository
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: string
+          default: ""
+          example: "registry.k8s.io"
+          description: "imageRepository sets the container registry to pull images from. If empty, nothing will be set and the from of kubeadm will be used."
+    - name: etcdImageTag
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: string
+          default: "3.5.4-0"
+          example: "3.4.13-0"
+          description: "etcdImageTag sets the tag for the etcd image."
+    - name: coreDNSImageTag
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: string
+          default: ""
+          example: "v1.8.5"
+          description: "coreDNSImageTag sets the tag for the coreDNS image."
+    - name: podSecurityStandard
+      required: false
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: true
+              description: "enabled enables the patches to enable Pod Security Standard via AdmissionConfiguration."
+            enforce:
+              type: string
+              default: "baseline"
+              description: "enforce sets the level for the enforce PodSecurityConfiguration mode. One of privileged, baseline, restricted."
+            audit:
+              type: string
+              default: "restricted"
+              description: "audit sets the level for the audit PodSecurityConfiguration mode. One of privileged, baseline, restricted."
+            warn:
+              type: string
+              default: "restricted"
+              description: "warn sets the level for the warn PodSecurityConfiguration mode. One of privileged, baseline, restricted."
+    - name: registryMirrors
+      required: false
+      schema:
+        openAPIV3Schema:
+          type: array
+          items:
+            type: object
+            required:
+              - registryHost
+              - mirrorEndpoints
+            properties:
+              registryHost:
+                type: string
+                example: "docker.io"
+                description: "The registry to configure the mirror for."
+              mirrorEndpoints:
+                type: array
+                description: "The list of endpoints to use as the mirror."
+                items:
+                  type: string
+    - name: registryCredentials
+      required: false
+      schema:
+        openAPIV3Schema:
+          type: array
+          items:
+            type: object
+            properties:
+              registryHost:
+                type: string
+                example: "docker.io"
+                description: "The registry to configure the credentials for."
+              staticCredentials:
+                type: object
+                description: "Static credentials configuration."
+                required:
+                  - username
+                  - password
+                properties:
+                  username:
+                    type: string
+                    example: "myusername"
+                    description: "The username to use for authentication to the registry."
+                  password:
+                    type: string
+                    example: "mypassword"
+                    description: "The password to use for authentication to the registry."
+            required:
+              - registryHost
+            oneOf:
+              - staticCredentials
+    - name: registryCredentialStrategy
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: string
+          enum: [MirrorCredentialsOnly, MirrorCredentialsFirst, MirrorCredentialsLast]
+          default: MirrorCredentialsOnly
+  patches:
+    - name: filesArray
+      description: "Initializes the files and pre-kubeadm commands arrays."
+      definitions:
+        - selector:
+            kind: KubeadmControlPlaneTemplate
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files"
+              valueFrom:
+                template: "[]"
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/preKubeadmCommands"
+              valueFrom:
+                template: "[]"
+        - selector:
+            kind: KubeadmConfigTemplate
+            apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+            matchResources:
+              machineDeploymentClass:
+                names:
+                  - default-worker
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/files"
+              valueFrom:
+                template: "[]"
+            - op: add
+              path: "/spec/template/spec/preKubeadmCommands"
+              valueFrom:
+                template: "[]"
+    - name: imageRepository
+      description: "Sets the imageRepository used for the KubeadmControlPlane."
+      enabledIf: '{{ ne .imageRepository "" }}'
+      definitions:
+      - selector:
+          apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+          kind: KubeadmControlPlaneTemplate
+          matchResources:
+            controlPlane: true
+        jsonPatches:
+        - op: add
+          path: "/spec/template/spec/kubeadmConfigSpec/clusterConfiguration/imageRepository"
+          valueFrom:
+            variable: imageRepository
+    # We have to pin the cgroupDriver to cgroupfs for Kubernetes < v1.24 because kind does not support systemd for those versions, but kubeadm >= 1.21 defaults to systemd.
+    - name: cgroupDriver-controlPlane
+      description: |
+        Sets the cgroupDriver to cgroupfs if a Kubernetes version < v1.24 is referenced.
+        This is required because kind and the node images do not support the default
+        systemd cgroupDriver for kubernetes < v1.24.
+      enabledIf: '{{ semverCompare "<= v1.23" .builtin.controlPlane.version }}'
+      definitions:
+        - selector:
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            kind: KubeadmControlPlaneTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/initConfiguration/nodeRegistration/kubeletExtraArgs/cgroup-driver"
+              value: cgroupfs
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/joinConfiguration/nodeRegistration/kubeletExtraArgs/cgroup-driver"
+              value: cgroupfs
+    - name: cgroupDriver-machineDeployment
+      description: |
+        Sets the cgroupDriver to cgroupfs if a Kubernetes version < v1.24 is referenced.
+        This is required because kind and the node images do not support the default
+        systemd cgroupDriver for kubernetes < v1.24.
+      enabledIf: '{{ semverCompare "<= v1.23" .builtin.machineDeployment.version }}'
+      definitions:
+        - selector:
+            apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+            kind: KubeadmConfigTemplate
+            matchResources:
+              machineDeploymentClass:
+                names:
+                  - default-worker
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/joinConfiguration/nodeRegistration/kubeletExtraArgs/cgroup-driver"
+              value: cgroupfs
+    - name: etcdImageTag
+      description: "Sets tag to use for the etcd image in the KubeadmControlPlane."
+      definitions:
+        - selector:
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            kind: KubeadmControlPlaneTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/clusterConfiguration/etcd"
+              valueFrom:
+                template: |
+                  local:
+                    imageTag: {{ .etcdImageTag }}
+    - name: coreDNSImageTag
+      description: "Sets tag to use for the etcd image in the KubeadmControlPlane."
+      definitions:
+      - selector:
+          apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+          kind: KubeadmControlPlaneTemplate
+          matchResources:
+            controlPlane: true
+        jsonPatches:
+        - op: add
+          path: "/spec/template/spec/kubeadmConfigSpec/clusterConfiguration/dns"
+          valueFrom:
+            template: |
+              imageTag: {{ .coreDNSImageTag }}
+    - name: customImage
+      description: "Sets the container image that is used for running dockerMachines for the controlPlane and default-worker machineDeployments."
+      definitions:
+      - selector:
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+          kind: DockerMachineTemplate
+          matchResources:
+            machineDeploymentClass:
+              names:
+              - default-worker
+        jsonPatches:
+        - op: add
+          path: "/spec/template/spec/customImage"
+          valueFrom:
+            template: |
+              {{ .kindNodeImageRepository }}:{{ .builtin.machineDeployment.version | replace "+" "_" }}
+      - selector:
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+          kind: DockerMachineTemplate
+          matchResources:
+            controlPlane: true
+        jsonPatches:
+        - op: add
+          path: "/spec/template/spec/customImage"
+          valueFrom:
+            template: |
+              {{ .kindNodeImageRepository }}:{{ .builtin.controlPlane.version | replace "+" "_" }}
+    - name: podSecurityStandard
+      description: "Adds an admission configuration for PodSecurity to the kube-apiserver."
+      definitions:
+      - selector:
+          apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+          kind: KubeadmControlPlaneTemplate
+          matchResources:
+            controlPlane: true
+        jsonPatches:
+        - op: add
+          path: "/spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs"
+          value:
+            admission-control-config-file: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+        - op: add
+          path: "/spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraVolumes"
+          value:
+          - name: admission-pss
+            hostPath: /etc/kubernetes/kube-apiserver-admission-pss.yaml
+            mountPath: /etc/kubernetes/kube-apiserver-admission-pss.yaml
+            readOnly: true
+            pathType: "File"
+        - op: add
+          path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+          valueFrom:
+            template: |
+              content: |
+                apiVersion: apiserver.config.k8s.io/v1
+                kind: AdmissionConfiguration
+                plugins:
+                - name: PodSecurity
+                  configuration:
+                    apiVersion: pod-security.admission.config.k8s.io/v1{{ if semverCompare "< v1.25" .builtin.controlPlane.version }}beta1{{ end }}
+                    kind: PodSecurityConfiguration
+                    defaults:
+                      enforce: "{{ .podSecurityStandard.enforce }}"
+                      enforce-version: "latest"
+                      audit: "{{ .podSecurityStandard.audit }}"
+                      audit-version: "latest"
+                      warn: "{{ .podSecurityStandard.warn }}"
+                      warn-version: "latest"
+                    exemptions:
+                      usernames: []
+                      runtimeClasses: []
+                      namespaces: [kube-system]
+              path: /etc/kubernetes/kube-apiserver-admission-pss.yaml
+      enabledIf: "{{ .podSecurityStandard.enabled }}"
+    - name: kubeletCredentialProviderPatches
+      description: "Sets the container configuration in container runtime config and restarts containerd."
+      enabledIf: '{{ if .registryCredentials }}{{ gt (len .registryCredentials) 0 }}{{ else }}false{{ end }}'
+      definitions:
+        - selector:
+            kind: KubeadmControlPlaneTemplate
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/etc/kubernetes/image-credential-provider-config.yaml"
+                  permissions: "0600"
+                  content: |
+                    apiVersion: kubelet.config.k8s.io/v1beta1
+                    kind: CredentialProviderConfig
+                    providers:
+                    - name: shim-credential-provider
+                      args:
+                      - "get-credentials"
+                      - "-c"
+                      - "/etc/kubernetes/shim-credential-provider-config.yaml"
+                      matchImages:
+                      - "*:5000"
+                      - "*"
+                      - "*.*"
+                      - "*.*.*"
+                      - "*.*.*.*"
+                      - "*.*.*.*.*"
+                      - "*.*.*.*.*.*"
+                      defaultCacheDuration: "0s"
+                      apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/etc/kubernetes/static-image-credentials.json"
+                  permissions: "0600"
+                  content: |
+                    {
+                      "kind":"CredentialProviderResponse",
+                      "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
+                      "cacheKeyType":"Registry",
+                      "cacheDuration":"5s",
+                      "auth":{
+                        {{- range $idx, $m := .registryCredentials }}{{ with $m.staticCredentials }}{{if $idx}},{{end}}
+                        "{{ $m.registryHost }}": {"username": "{{ .username }}", "password": "{{ .password }}"}{{ end }}{{ end }}
+                      }
+                    }
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/etc/kubernetes/shim-credential-provider-config.yaml"
+                  permissions: "0600"
+                  content: |
+                    apiVersion: config.kubeletimagecredentialprovidershim.d2iq.com/v1alpha1
+                    kind: KubeletImageCredentialProviderShimConfig
+                    credentialProviderPluginBinDir: /etc/kubernetes/image-credential-provider/
+                    {{- $registryCredentialStrategy := .registryCredentialStrategy }}
+                    {{- range .registryMirrors }}{{ if eq .registryHost "*" }}
+                    mirror:
+                      endpoint: "{{ index .mirrorEndpoints 0}}"
+                      credentialsStrategy: {{ $registryCredentialStrategy }}{{ end }}{{ end }}
+                    credentialProviders:
+                      apiVersion: kubelet.config.k8s.io/v1beta1
+                      kind: CredentialProviderConfig
+                      providers:
+                      - name: static-credential-provider
+                        args:
+                          - /etc/kubernetes/static-image-credentials.json
+                        matchImages:
+                          {{- range .registryCredentials }}{{ if .staticCredentials }}
+                          - "{{ .registryHost }}"{{ end }}{{ end }}
+                        defaultCacheDuration: "0s"
+                        apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+        - selector:
+            kind: KubeadmConfigTemplate
+            apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+            matchResources:
+              machineDeploymentClass:
+                names:
+                  - default-worker
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/etc/kubernetes/image-credential-provider-config.yaml"
+                  permissions: "0600"
+                  content: |
+                    apiVersion: kubelet.config.k8s.io/v1beta1
+                    kind: CredentialProviderConfig
+                    providers:
+                    - name: shim-credential-provider
+                      args:
+                      - "get-credentials"
+                      - "-c"
+                      - "/etc/kubernetes/shim-credential-provider-config.yaml"
+                      matchImages:
+                      - "*:5000"
+                      - "*"
+                      - "*.*"
+                      - "*.*.*"
+                      - "*.*.*.*"
+                      - "*.*.*.*.*"
+                      - "*.*.*.*.*.*"
+                      defaultCacheDuration: "0s"
+                      apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+            - op: add
+              path: "/spec/template/spec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/etc/kubernetes/static-image-credentials.json"
+                  permissions: "0600"
+                  content: |
+                    {
+                      "kind":"CredentialProviderResponse",
+                      "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
+                      "cacheKeyType":"Registry",
+                      "cacheDuration":"5s",
+                      "auth":{
+                        {{- range $idx, $m := .registryCredentials }}{{ with $m.staticCredentials }}{{if $idx}},{{end}}
+                        "{{ $m.registryHost }}": {"username": "{{ .username }}", "password": "{{ .password }}"}{{ end }}{{ end }}
+                      }
+                    }
+            - op: add
+              path: "/spec/template/spec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/etc/kubernetes/shim-credential-provider-config.yaml"
+                  permissions: "0600"
+                  content: |
+                    apiVersion: config.kubeletimagecredentialprovidershim.d2iq.com/v1alpha1
+                    kind: KubeletImageCredentialProviderShimConfig
+                    credentialProviderPluginBinDir: /etc/kubernetes/image-credential-provider/
+                    {{- $registryCredentialStrategy := .registryCredentialStrategy }}
+                    {{- range .registryMirrors }}{{ if eq .registryHost "*" }}
+                    mirror:
+                      endpoint: "{{ index .mirrorEndpoints 0}}"
+                      credentialsStrategy: {{ $registryCredentialStrategy }}{{ end }}{{ end }}
+                    credentialProviders:
+                      apiVersion: kubelet.config.k8s.io/v1beta1
+                      kind: CredentialProviderConfig
+                      providers:
+                      - name: static-credential-provider
+                        args:
+                          - /etc/kubernetes/static-image-credentials.json
+                        matchImages:
+                          {{- range .registryCredentials }}{{ if .staticCredentials }}
+                          - "{{ .registryHost }}"{{ end }}{{ end }}
+                        defaultCacheDuration: "0s"
+                        apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+    - name: containerdConfigurationAndRestart
+      description: "Sets the container configuration in container runtime config and restarts containerd."
+      enabledIf: '{{ if .registryMirrors }}{{ gt (len .registryMirrors) 0 }}{{ else }}false{{ end }}'
+      definitions:
+        - selector:
+            kind: KubeadmControlPlaneTemplate
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/etc/containerd/konvoy-conf.d/konvoy-registry-configuration.toml"
+                  permissions: "0600"
+                  content: |
+                    {{- range $m := .registryMirrors }}
+                    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $m.registryHost }}"]
+                      endpoint = [{{ range $idx, $e := $m.mirrorEndpoints }}{{ if $idx }}, {{ end }}{{ printf "%q" $e }}{{ end }}]{{ end }}
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+              valueFrom:
+                template: |
+                  path: /run/konvoy/prekubeadm/containerd-apply-patches.sh
+                  permissions: "0700"
+                  content: |
+                    #!/bin/bash
+                    set -euo pipefail
+                    IFS=$'\n\t'
+                    if ! ctr --namespace k8s.io images check "name==docker.io/mesosphere/toml-merge:v0.1.0" | grep "docker.io/mesosphere/toml-merge:v0.1.0" >/dev/null; then
+                      ctr --namespace k8s.io images pull "docker.io/mesosphere/toml-merge:v0.1.0"
+                    fi
+                    cleanup() {
+                      ctr images unmount "${tmp_ctr_mount_dir}" || true
+                    }
+                    trap 'cleanup' EXIT
+                    readonly tmp_ctr_mount_dir="$(mktemp -d)"
+                    ctr --namespace k8s.io images mount docker.io/mesosphere/toml-merge:v0.1.0 "${tmp_ctr_mount_dir}"
+                    "${tmp_ctr_mount_dir}/usr/local/bin/toml-merge" -i --patch-file "/etc/containerd/konvoy-conf.d/*.toml" /etc/containerd/config.toml
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/run/konvoy/prekubeadm/restart-containerd-and-wait.sh"
+                  permissions: "0700"
+                  content: |
+                    #!/bin/bash
+                    systemctl restart containerd
+
+                    SECONDS=0
+                    until crictl info
+                    do
+                      if (( SECONDS > 60 ))
+                      then
+                        echo "Containerd is not running. Giving up..."
+                        exit 1
+                      fi
+                      echo "Containerd is not running yet. Waiting..."
+                      sleep 5
+                    done
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-"
+              valueFrom:
+                template: "/bin/bash /run/konvoy/prekubeadm/containerd-apply-patches.sh"
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-"
+              valueFrom:
+                template: "systemctl daemon-reload"
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-"
+              valueFrom:
+                template: "/bin/bash /run/konvoy/prekubeadm/restart-containerd-and-wait.sh"
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-"
+              valueFrom:
+                template: "rm -rf /run/konvoy/prekubeadm/"
+        - selector:
+            kind: KubeadmConfigTemplate
+            apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+            matchResources:
+              machineDeploymentClass:
+                names:
+                  - default-worker
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/etc/containerd/konvoy-conf.d/konvoy-registry-configuration.toml"
+                  permissions: "0600"
+                  content: |
+                    # TODO Figure out how not to hard code this...
+                    [plugins."io.containerd.grpc.v1.cri".registry.configs."registry:5000".tls]
+                      insecure_skip_verify = true
+
+                    {{- range $m := .registryMirrors }}
+                    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $m.registryHost }}"]
+                      endpoint = [{{ range $idx, $e := $m.mirrorEndpoints }}{{ if $idx }}, {{ end }}{{ printf "%q" $e }}{{ end }}]{{ end }}
+            - op: add
+              path: "/spec/template/spec/files/-"
+              valueFrom:
+                template: |
+                  path: /run/konvoy/prekubeadm/containerd-apply-patches.sh
+                  permissions: "0700"
+                  content: |
+                    #!/bin/bash
+                    set -euo pipefail
+                    IFS=$'\n\t'
+                    if ! ctr --namespace k8s.io images check "name==docker.io/mesosphere/toml-merge:v0.1.0" | grep "docker.io/mesosphere/toml-merge:v0.1.0" >/dev/null; then
+                      ctr --namespace k8s.io images pull "docker.io/mesosphere/toml-merge:v0.1.0"
+                    fi
+                    cleanup() {
+                      ctr images unmount "${tmp_ctr_mount_dir}" || true
+                    }
+                    trap 'cleanup' EXIT
+                    readonly tmp_ctr_mount_dir="$(mktemp -d)"
+                    ctr --namespace k8s.io images mount docker.io/mesosphere/toml-merge:v0.1.0 "${tmp_ctr_mount_dir}"
+                    "${tmp_ctr_mount_dir}/usr/local/bin/toml-merge" -i --patch-file "/etc/containerd/konvoy-conf.d/*.toml" /etc/containerd/config.toml
+            - op: add
+              path: "/spec/template/spec/files/-"
+              valueFrom:
+                template: |
+                  path:  "/run/konvoy/prekubeadm/restart-containerd-and-wait.sh"
+                  permissions: "0700"
+                  content: |
+                    #!/bin/bash
+                    systemctl restart containerd
+
+                    SECONDS=0
+                    until crictl info
+                    do
+                      if (( SECONDS > 60 ))
+                      then
+                        echo "Containerd is not running. Giving up..."
+                        exit 1
+                      fi
+                      echo "Containerd is not running yet. Waiting..."
+                      sleep 5
+                    done
+            - op: add
+              path: "/spec/template/spec/preKubeadmCommands/-"
+              valueFrom:
+                template: "/bin/bash /run/konvoy/prekubeadm/containerd-apply-patches.sh"
+            - op: add
+              path: "/spec/template/spec/preKubeadmCommands/-"
+              valueFrom:
+                template: "systemctl daemon-reload"
+            - op: add
+              path: "/spec/template/spec/preKubeadmCommands/-"
+              valueFrom:
+                template: "/bin/bash /run/konvoy/prekubeadm/restart-containerd-and-wait.sh"
+            - op: add
+              path: "/spec/template/spec/preKubeadmCommands/-"
+              valueFrom:
+                template: "rm -rf /run/konvoy/prekubeadm/"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: DockerClusterTemplate
+metadata:
+  name: shim-demo-cluster
+spec:
+  template:
+    spec: {}
+---
+kind: KubeadmControlPlaneTemplate
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+metadata:
+  name: shim-demo-control-plane
+spec:
+  template:
+    spec:
+      kubeadmConfigSpec:
+        clusterConfiguration:
+          controllerManager:
+            extraArgs: { enable-hostpath-provisioner: "true" }
+          apiServer:
+            # host.docker.internal is required by kubetest when running on MacOS because of the way ports are proxied.
+            certSANs: [localhost, 127.0.0.1, 0.0.0.0, host.docker.internal]
+        initConfiguration:
+          nodeRegistration:
+            # We have to set the criSocket to containerd as kubeadm defaults to docker runtime if both containerd and docker sockets are found
+            criSocket: unix:///var/run/containerd/containerd.sock
+            kubeletExtraArgs:
+              eviction-hard: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+              image-credential-provider-config: /etc/kubernetes/image-credential-provider-config.yaml
+              image-credential-provider-bin-dir: /etc/kubernetes/image-credential-provider/
+        joinConfiguration:
+          nodeRegistration:
+            # We have to set the criSocket to containerd as kubeadm defaults to docker runtime if both containerd and docker sockets are found
+            criSocket: unix:///var/run/containerd/containerd.sock
+            kubeletExtraArgs:
+              eviction-hard: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+              image-credential-provider-config: /etc/kubernetes/image-credential-provider-config.yaml
+              image-credential-provider-bin-dir: /etc/kubernetes/image-credential-provider/
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: DockerMachineTemplate
+metadata:
+  name: shim-demo-control-plane
+spec:
+  template:
+    spec:
+      extraMounts:
+        - containerPath: "/var/run/docker.sock"
+          hostPath: "/var/run/docker.sock"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: DockerMachineTemplate
+metadata:
+  name: shim-demo-default-worker-machinetemplate
+spec:
+  template:
+    spec:
+      extraMounts:
+        - containerPath: "/var/run/docker.sock"
+          hostPath: "/var/run/docker.sock"
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: shim-demo-default-worker-bootstraptemplate
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          # We have to set the criSocket to containerd as kubeadm defaults to docker runtime if both containerd and docker sockets are found
+          criSocket: unix:///var/run/containerd/containerd.sock
+          kubeletExtraArgs:
+            eviction-hard: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+            image-credential-provider-config: /etc/kubernetes/image-credential-provider-config.yaml
+            image-credential-provider-bin-dir: /etc/kubernetes/image-credential-provider/

@@ -5,9 +5,9 @@ IFS=$'\n\t'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 
-readonly ROOT_DIR="${SCRIPT_DIR}/.."
+pushd "${SCRIPT_DIR}/../.."
 
-readonly DEMODATA_DIR="${ROOT_DIR}/demodata"
+readonly DEMODATA_DIR="demodata"
 rm -rf "${DEMODATA_DIR}" && mkdir -p "${DEMODATA_DIR}"
 
 export KIND_EXPERIMENTAL_DOCKER_NETWORK=shim-credentials-airgapped-kind-network
@@ -22,8 +22,8 @@ REGISTRY_IP=$(docker network inspect "${KIND_EXPERIMENTAL_DOCKER_NETWORK}" |
 REGISTRY_PORT=5000
 # Use a domain so it can be access on a Mac
 REGISTRY_ADDRESS=registry-airgapped
-REGISTRY_CERTS_DIR="${DEMODATA_DIR}/certs"
-REGISTRY_AUTH_DIR="${DEMODATA_DIR}/auth"
+REGISTRY_CERTS_DIR="$(realpath "${DEMODATA_DIR}/certs")"
+REGISTRY_AUTH_DIR="$(realpath "${DEMODATA_DIR}/auth")"
 REGISTRY_USERNAME=testuser
 REGISTRY_PASSWORD=testpassword
 

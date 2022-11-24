@@ -1,4 +1,6 @@
+clusterctl 1.2.6
 ginkgo 2.5.0
+gojq 0.12.9
 golang 1.19.3
 golangci-lint 1.50.1
 goreleaser 1.12.3

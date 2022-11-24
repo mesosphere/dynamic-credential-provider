@@ -1,0 +1,10 @@
+# Copyright 2022 D2iQ, Inc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# syntax=docker/dockerfile:1
+
+FROM --platform=linux/${TARGETARCH} mesosphere/kind-node:v1.25.4
+
+ARG TARGETARCH
+COPY dist/shim-credential-provider_linux_${TARGETARCH}_v1/shim-credential-provider /etc/kubernetes/image-credential-provider/
+COPY dist/static-credential-provider_linux_${TARGETARCH}_v1/static-credential-provider /etc/kubernetes/image-credential-provider/
