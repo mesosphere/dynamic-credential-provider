@@ -12,7 +12,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
-	go.etcd.io/etcd/client/pkg/v3 v3.5.5
+	go.etcd.io/etcd/client/pkg/v3 v3.5.6
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	k8s.io/apimachinery v0.25.4
 	k8s.io/client-go v0.25.4
