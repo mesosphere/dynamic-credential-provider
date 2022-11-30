@@ -12,9 +12,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/sethvargo/go-password/password"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/docker"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/env"
 )
 
 var _ = Describe("Successful",
@@ -52,7 +56,7 @@ var _ = Describe("Successful",
 				pod := runPod(
 					ctx,
 					kindClusterClient,
-					fmt.Sprintf("%s/nonexistent:v1.2.3", mirrorRegistryAddress),
+					fmt.Sprintf("%s/nonexistent:v1.2.3", e2eConfig.Registry.Address),
 				)
 
 				Eventually(func(ctx context.Context) string {
@@ -75,6 +79,79 @@ var _ = Describe("Successful",
 		It("pull image from origin when it does not exist in mirror",
 			func(ctx SpecContext) {
 				pod := runPod(ctx, kindClusterClient, "nginx:stable")
+
+				Eventually(func(ctx context.Context) corev1.ConditionStatus {
+					var err error
+					pod, err = kindClusterClient.CoreV1().Pods(metav1.NamespaceDefault).
+						Get(ctx, pod.GetName(), metav1.GetOptions{})
+					Expect(err).NotTo(HaveOccurred())
+
+					for _, c := range pod.Status.Conditions {
+						if c.Type == corev1.PodReady {
+							return c.Status
+						}
+					}
+					return corev1.ConditionUnknown
+				}, time.Minute, time.Second).WithContext(ctx).
+					Should(Equal(corev1.ConditionTrue))
+			})
+
+		It("pull image that only exists in mirror using origin style address",
+			func(ctx SpecContext) {
+				randomTag, err := password.Generate(6, 0, 0, true, true)
+				Expect(err).NotTo(HaveOccurred())
+
+				podMirrorTag := fmt.Sprintf("nginx:%s", randomTag)
+
+				err = docker.RetagAndPushImage(
+					ctx,
+					"nginx:stable",
+					fmt.Sprintf("%s/library/%s", e2eConfig.Registry.HostPortAddress, podMirrorTag),
+					env.DockerHubUsername(),
+					env.DockerHubPassword(),
+					e2eConfig.Registry.Username,
+					e2eConfig.Registry.Password,
+				)
+				Expect(err).NotTo(HaveOccurred())
+
+				pod := runPod(ctx, kindClusterClient, podMirrorTag)
+
+				Eventually(func(ctx context.Context) corev1.ConditionStatus {
+					var err error
+					pod, err = kindClusterClient.CoreV1().Pods(metav1.NamespaceDefault).
+						Get(ctx, pod.GetName(), metav1.GetOptions{})
+					Expect(err).NotTo(HaveOccurred())
+
+					for _, c := range pod.Status.Conditions {
+						if c.Type == corev1.PodReady {
+							return c.Status
+						}
+					}
+					return corev1.ConditionUnknown
+				}, time.Minute, time.Second).WithContext(ctx).
+					Should(Equal(corev1.ConditionTrue))
+			})
+
+		It("pull image that only exists in mirror using mirror address",
+			func(ctx SpecContext) {
+				randomTag, err := password.Generate(6, 0, 0, true, true)
+				Expect(err).NotTo(HaveOccurred())
+
+				podMirrorTag := fmt.Sprintf("nginx:%s", randomTag)
+				podMirrorName := fmt.Sprintf("%s/%s", e2eConfig.Registry.Address, podMirrorTag)
+
+				err = docker.RetagAndPushImage(
+					ctx,
+					"nginx:stable",
+					fmt.Sprintf("%s/%s", e2eConfig.Registry.HostPortAddress, podMirrorTag),
+					env.DockerHubUsername(),
+					env.DockerHubPassword(),
+					e2eConfig.Registry.Username,
+					e2eConfig.Registry.Password,
+				)
+				Expect(err).NotTo(HaveOccurred())
+
+				pod := runPod(ctx, kindClusterClient, podMirrorName)
 
 				Eventually(func(ctx context.Context) corev1.ConditionStatus {
 					var err error

@@ -5,6 +5,8 @@ package docker
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -45,6 +47,7 @@ func RunContainerInBackground(
 	containerName string,
 	containerCfg *container.Config,
 	hostCfg *container.HostConfig,
+	pullUsername, pullPassword string,
 ) (containerInspect types.ContainerJSON, cleanup func(context.Context) error, err error) {
 	dClient, err := ClientFromEnv()
 	if err != nil {
@@ -88,7 +91,7 @@ func RunContainerInBackground(
 		)
 	}
 	defer out.Close()
-	_, _ = io.Copy(io.Discard, out)
+	_, _ = io.Copy(os.Stderr, out)
 
 	created, err := dClient.ContainerCreate(ctx, containerCfg, hostCfg, nil, nil, containerName)
 	if err != nil {
@@ -141,4 +144,59 @@ func ForceDeleteContainer(ctx context.Context, containerID string) error {
 		return fmt.Errorf("failed to delete container: %w", err)
 	}
 	return nil
+}
+
+func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
+	ctx context.Context,
+	srcImage, destImage string,
+	pullUsername, pullPassword string,
+	pushUsername, pushPassword string,
+) error {
+	dClient, err := ClientFromEnv()
+	if err != nil {
+		return err
+	}
+
+	out, err := dClient.ImagePull(
+		ctx,
+		srcImage,
+		types.ImagePullOptions{RegistryAuth: authString(pullUsername, pullPassword)},
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to pull image %q: %w",
+			srcImage,
+			err,
+		)
+	}
+	defer out.Close()
+	_, _ = io.Copy(os.Stderr, out)
+
+	if err := dClient.ImageTag(ctx, srcImage, destImage); err != nil {
+		return fmt.Errorf("failed to retag image: %w", err)
+	}
+	defer func() { _, _ = dClient.ImageRemove(ctx, destImage, types.ImageRemoveOptions{}) }()
+
+	out, err = dClient.ImagePush(
+		ctx,
+		destImage,
+		types.ImagePushOptions{RegistryAuth: authString(pushUsername, pushPassword)},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to push retagged image: %w", err)
+	}
+	defer out.Close()
+	_, _ = io.Copy(os.Stderr, out)
+
+	return nil
+}
+
+func authString(username, password string) string {
+	authConfig := types.AuthConfig{
+		Username: username,
+		Password: password,
+	}
+	encodedJSON, _ := json.Marshal(authConfig)
+
+	return base64.StdEncoding.EncodeToString(encodedJSON)
 }

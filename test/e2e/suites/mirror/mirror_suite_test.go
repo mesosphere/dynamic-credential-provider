@@ -6,6 +6,7 @@
 package mirror_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,10 +33,23 @@ func TestE2E(t *testing.T) {
 	RunSpecs(t, "Mirror Suite")
 }
 
+type e2eSetupConfig struct {
+	Registry   e2eRegistryConfig `json:"registry"`
+	Kubeconfig string            `json:"kubeconfig"`
+}
+
+type e2eRegistryConfig struct {
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	Address         string `json:"address"`
+	HostPortAddress string `json:"hostPortAddress"`
+	CACertFile      string `json:"caCertFile"`
+}
+
 var (
 	kindClusterRESTConfig *rest.Config
 	kindClusterClient     kubernetes.Interface
-	mirrorRegistryAddress string
+	e2eConfig             e2eSetupConfig
 )
 
 //nolint:gosec // No credentials here.
@@ -58,16 +72,13 @@ func testdataPath(f string) string {
 }
 
 var _ = SynchronizedBeforeSuite(
-	func(ctx SpecContext) {
+	func(ctx SpecContext) []byte {
 		By("Starting Docker registry")
 		mirrorRegistry, err := registry.NewRegistry(ctx)
 		Expect(err).ShouldNot(HaveOccurred())
 		DeferCleanup(func(ctx SpecContext) error {
 			return mirrorRegistry.Delete(ctx)
 		}, NodeTimeout(time.Second))
-		Expect(
-			os.WriteFile(registry.E2ERegistryAddressFile, []byte(mirrorRegistry.Address()), 0o600),
-		).To(Succeed())
 
 		By("Setting up kubelet credential providers")
 		providerBinDir := GinkgoT().TempDir()
@@ -134,7 +145,7 @@ var _ = SynchronizedBeforeSuite(
 		)).To(Succeed())
 
 		By("Starting KinD cluster")
-		kindCluster, err := cluster.NewKinDCluster(
+		kindCluster, kubeconfig, err := cluster.NewKinDCluster(
 			ctx,
 			[]kindcluster.ProviderOption{kindcluster.ProviderWithDocker()},
 			[]kindcluster.CreateOption{
@@ -176,18 +187,30 @@ var _ = SynchronizedBeforeSuite(
 		DeferCleanup(func(ctx SpecContext) error {
 			return kindCluster.Delete(ctx)
 		}, NodeTimeout(time.Minute))
+
+		configBytes, _ := json.Marshal(e2eSetupConfig{
+			Registry: e2eRegistryConfig{
+				Username:        mirrorRegistry.Username(),
+				Password:        mirrorRegistry.Password(),
+				Address:         mirrorRegistry.Address(),
+				HostPortAddress: mirrorRegistry.HostPortAddress(),
+				CACertFile:      mirrorRegistry.CACertFile(),
+			},
+			Kubeconfig: kubeconfig,
+		})
+
+		return configBytes
 	},
-	func() {
-		kubeconfigBytes, err := os.ReadFile("e2e-kubeconfig")
-		Expect(err).NotTo(HaveOccurred())
-		kindClusterRESTConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
+	func(configBytes []byte) {
+		Expect(json.Unmarshal(configBytes, &e2eConfig)).To(Succeed())
+
+		var err error
+		kindClusterRESTConfig, err = clientcmd.RESTConfigFromKubeConfig(
+			[]byte(e2eConfig.Kubeconfig),
+		)
 		Expect(err).NotTo(HaveOccurred())
 		kindClusterClient, err = kubernetes.NewForConfig(kindClusterRESTConfig)
 		Expect(err).NotTo(HaveOccurred())
-
-		mirrorRegistryAddressBytes, err := os.ReadFile(registry.E2ERegistryAddressFile)
-		Expect(err).NotTo(HaveOccurred())
-		mirrorRegistryAddress = string(mirrorRegistryAddressBytes)
 	},
 	NodeTimeout(time.Minute*2), GracePeriod(time.Minute*2),
 )

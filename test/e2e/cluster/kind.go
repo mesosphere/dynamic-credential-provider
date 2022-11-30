@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -21,8 +22,6 @@ import (
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/seedrng"
 )
 
-const E2EKubeconfig = "e2e-kubeconfig"
-
 // kindCluster represents a KinD cluster.
 type kindCluster struct {
 	name     string
@@ -36,16 +35,22 @@ func NewKinDCluster(
 	ctx context.Context,
 	providerOpts []cluster.ProviderOption,
 	createOpts []cluster.CreateOption,
-) (Cluster, error) {
+) (Cluster, string, error) {
 	seedrng.EnsureSeeded()
 
 	name := strings.ReplaceAll(namesgenerator.GetRandomName(0), "_", "-")
 
 	provider := cluster.NewProvider(providerOpts...)
 
-	// Export kubeconfig to file by default. This allows creating clients from other e2e tests. Can be overridden by
-	// using create option to configure this via `cluster.CreateWithKubeconfigPath` when calling `NewKindCluster`.
-	mergedCreateOpts := []cluster.CreateOption{cluster.CreateWithKubeconfigPath(E2EKubeconfig)}
+	// Do not export kubeconfig to file by default, makes cleanup easier. This can be overridden by using create option
+	// to configure this via `cluster.CreateWithKubeconfigPath` when calling `NewKindCluster`.
+	tempDir, err := os.MkdirTemp("", fmt.Sprintf("%s-kubeconfig-*", name))
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to create temp dir: %w", err)
+	}
+	defer os.RemoveAll(tempDir)
+	tempKubeconfig := filepath.Join(tempDir, "kubeconfig")
+	mergedCreateOpts := []cluster.CreateOption{cluster.CreateWithKubeconfigPath(tempKubeconfig)}
 	mergedCreateOpts = append(mergedCreateOpts, createOpts...)
 
 	kindClusterErr := make(chan error, 1)
@@ -55,23 +60,23 @@ func NewKinDCluster(
 
 	select {
 	case <-ctx.Done():
-		if err := provider.Delete(name, E2EKubeconfig); err != nil {
-			return nil, fmt.Errorf("failed to delete KinD cluster after spec timeout: %w", err)
+		if err := provider.Delete(name, ""); err != nil {
+			return nil, "", fmt.Errorf("failed to delete KinD cluster after spec timeout: %w", err)
 		}
-		return nil, nil
+		return nil, "", nil
 	case err := <-kindClusterErr:
 		if err != nil {
-			return nil, fmt.Errorf("failed to create KinD cluster: %w", err)
+			return nil, "", fmt.Errorf("failed to create KinD cluster: %w", err)
 		}
 	}
 
 	const warningDeleteKinD = "WARNING: failed to delete KinD cluster: %v"
 	kubeconfig, err := provider.KubeConfig(name, false)
 	if err != nil {
-		if deleteErr := provider.Delete(name, E2EKubeconfig); deleteErr != nil {
+		if deleteErr := provider.Delete(name, ""); deleteErr != nil {
 			_, _ = fmt.Fprintf(os.Stderr, warningDeleteKinD, deleteErr)
 		}
-		return nil, fmt.Errorf("failed to retrieve kubeconfig: %w", err)
+		return nil, "", fmt.Errorf("failed to retrieve kubeconfig: %w", err)
 	}
 
 	restConfig, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeconfig))
@@ -79,7 +84,7 @@ func NewKinDCluster(
 		if deleteErr := provider.Delete(name, ""); deleteErr != nil {
 			_, _ = fmt.Fprintf(os.Stderr, warningDeleteKinD, deleteErr)
 		}
-		return nil, fmt.Errorf("failed to build REST config from kubeconfig: %w", err)
+		return nil, "", fmt.Errorf("failed to build REST config from kubeconfig: %w", err)
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(restConfig)
@@ -87,7 +92,7 @@ func NewKinDCluster(
 		if deleteErr := provider.Delete(name, ""); deleteErr != nil {
 			_, _ = fmt.Fprintf(os.Stderr, warningDeleteKinD, deleteErr)
 		}
-		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
+		return nil, "", fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
 	err = wait.PollInfiniteWithContext(ctx, time.Second*1, func(ctx context.Context) (bool, error) {
@@ -105,16 +110,15 @@ func NewKinDCluster(
 		if err := provider.Delete(name, ""); err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, warningDeleteKinD, err)
 		}
-		return nil, fmt.Errorf("failed to wait for default service account to exist: %w", err)
+		return nil, "", fmt.Errorf("failed to wait for default service account to exist: %w", err)
 	}
 
 	return &kindCluster{
 		name:     name,
 		provider: provider,
-	}, nil
+	}, kubeconfig, nil
 }
 
 func (c *kindCluster) Delete(context.Context) error {
-	_ = os.Remove(E2EKubeconfig)
 	return c.provider.Delete(c.name, "")
 }

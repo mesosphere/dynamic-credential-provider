@@ -20,11 +20,10 @@ import (
 	"github.com/sethvargo/go-password/password"
 
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/docker"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/env"
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/seedrng"
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/tls"
 )
-
-const E2ERegistryAddressFile = "e2e-registry-address"
 
 type registryOptions struct {
 	image         string
@@ -151,6 +150,8 @@ func NewRegistry(ctx context.Context, opts ...Opt) (*Registry, error) {
 		containerName,
 		&containerCfg,
 		&hostCfg,
+		env.DockerHubUsername(),
+		env.DockerHubPassword(),
 	)
 	if err != nil {
 		if cleanupErr := cleanupTLSCerts(); cleanupErr != nil {
@@ -187,8 +188,6 @@ func NewRegistry(ctx context.Context, opts ...Opt) (*Registry, error) {
 		hostPortAddress: net.JoinHostPort(publishedPort[0].HostIP, publishedPort[0].HostPort),
 		caCertFile:      filepath.Join(tlsCertsDir, "ca.crt"),
 		cleanup: func(ctx context.Context) error {
-			_ = os.Remove(E2ERegistryAddressFile)
-
 			if cleanupErr := cleanupTLSCerts(); cleanupErr != nil {
 				_, _ = fmt.Fprintf(os.Stderr, warningTLSDir, cleanupErr)
 			}
