@@ -24,6 +24,8 @@ import (
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/tls"
 )
 
+const E2ERegistryAddressFile = "e2e-registry-address"
+
 type registryOptions struct {
 	image         string
 	dockerNetwork string
@@ -185,6 +187,8 @@ func NewRegistry(ctx context.Context, opts ...Opt) (*Registry, error) {
 		hostPortAddress: net.JoinHostPort(publishedPort[0].HostIP, publishedPort[0].HostPort),
 		caCertFile:      filepath.Join(tlsCertsDir, "ca.crt"),
 		cleanup: func(ctx context.Context) error {
+			_ = os.Remove(E2ERegistryAddressFile)
+
 			if cleanupErr := cleanupTLSCerts(); cleanupErr != nil {
 				_, _ = fmt.Fprintf(os.Stderr, warningTLSDir, cleanupErr)
 			}

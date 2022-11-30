@@ -16,10 +16,14 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/otiai10/copy"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	kindcluster "sigs.k8s.io/kind/pkg/cluster"
 
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/cluster"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/env"
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/registry"
 )
 
@@ -29,8 +33,9 @@ func TestE2E(t *testing.T) {
 }
 
 var (
-	kindCluster    cluster.Cluster
-	mirrorRegistry *registry.Registry
+	kindClusterRESTConfig *rest.Config
+	kindClusterClient     kubernetes.Interface
+	mirrorRegistryAddress string
 )
 
 //nolint:gosec // No credentials here.
@@ -55,12 +60,14 @@ func testdataPath(f string) string {
 var _ = SynchronizedBeforeSuite(
 	func(ctx SpecContext) {
 		By("Starting Docker registry")
-		r, err := registry.NewRegistry(ctx)
+		mirrorRegistry, err := registry.NewRegistry(ctx)
 		Expect(err).ShouldNot(HaveOccurred())
 		DeferCleanup(func(ctx SpecContext) error {
-			return r.Delete(ctx)
+			return mirrorRegistry.Delete(ctx)
 		}, NodeTimeout(time.Second))
-		mirrorRegistry = r
+		Expect(
+			os.WriteFile(registry.E2ERegistryAddressFile, []byte(mirrorRegistry.Address()), 0o600),
+		).To(Succeed())
 
 		By("Setting up kubelet credential providers")
 		providerBinDir := GinkgoT().TempDir()
@@ -72,7 +79,7 @@ var _ = SynchronizedBeforeSuite(
 		Expect(configTmpl.ExecuteTemplate(
 			templatedFile,
 			"image-credential-provider-config.yaml.tmpl",
-			struct{ MirrorAddress string }{MirrorAddress: r.Address()},
+			struct{ MirrorAddress string }{MirrorAddress: mirrorRegistry.Address()},
 		)).To(Succeed())
 		templatedFile, err = os.Create(
 			filepath.Join(providerBinDir, "shim-credential-provider-config.yaml"),
@@ -81,7 +88,7 @@ var _ = SynchronizedBeforeSuite(
 		Expect(configTmpl.ExecuteTemplate(
 			templatedFile,
 			"shim-credential-provider-config.yaml.tmpl",
-			struct{ MirrorAddress string }{MirrorAddress: r.Address()},
+			struct{ MirrorAddress string }{MirrorAddress: mirrorRegistry.Address()},
 		)).To(Succeed())
 		templatedFile, err = os.Create(
 			filepath.Join(providerBinDir, "static-image-credentials.json"),
@@ -91,11 +98,13 @@ var _ = SynchronizedBeforeSuite(
 			templatedFile,
 			"static-image-credentials.json.tmpl",
 			struct {
-				MirrorAddress, MirrorUsername, MirrorPassword string
+				MirrorAddress, MirrorUsername, MirrorPassword, DockerHubPassword, DockerHubUsername string
 			}{
-				MirrorAddress:  r.Address(),
-				MirrorUsername: r.Username(),
-				MirrorPassword: r.Password(),
+				MirrorAddress:     mirrorRegistry.Address(),
+				MirrorUsername:    mirrorRegistry.Username(),
+				MirrorPassword:    mirrorRegistry.Password(),
+				DockerHubUsername: env.DockerHubUsername(),
+				DockerHubPassword: env.DockerHubPassword(),
 			},
 		)).To(Succeed())
 		Expect(templatedFile.Close()).To(Succeed())
@@ -125,7 +134,7 @@ var _ = SynchronizedBeforeSuite(
 		)).To(Succeed())
 
 		By("Starting KinD cluster")
-		c, err := cluster.NewKinDCluster(
+		kindCluster, err := cluster.NewKinDCluster(
 			ctx,
 			[]kindcluster.ProviderOption{kindcluster.ProviderWithDocker()},
 			[]kindcluster.CreateOption{
@@ -165,10 +174,20 @@ var _ = SynchronizedBeforeSuite(
 		)
 		Expect(err).ShouldNot(HaveOccurred())
 		DeferCleanup(func(ctx SpecContext) error {
-			return c.Delete(ctx)
+			return kindCluster.Delete(ctx)
 		}, NodeTimeout(time.Minute))
-		kindCluster = c
 	},
-	func() {},
+	func() {
+		kubeconfigBytes, err := os.ReadFile("e2e-kubeconfig")
+		Expect(err).NotTo(HaveOccurred())
+		kindClusterRESTConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
+		Expect(err).NotTo(HaveOccurred())
+		kindClusterClient, err = kubernetes.NewForConfig(kindClusterRESTConfig)
+		Expect(err).NotTo(HaveOccurred())
+
+		mirrorRegistryAddressBytes, err := os.ReadFile(registry.E2ERegistryAddressFile)
+		Expect(err).NotTo(HaveOccurred())
+		mirrorRegistryAddress = string(mirrorRegistryAddressBytes)
+	},
 	NodeTimeout(time.Minute*2), GracePeriod(time.Minute*2),
 )
