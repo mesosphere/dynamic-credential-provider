@@ -58,7 +58,18 @@ func RunContainerInBackground(
 			types.NetworkInspectOptions{},
 		)
 		if client.IsErrNotFound(err) {
-			if _, err := dClient.NetworkCreate(ctx, hostCfg.NetworkMode.NetworkName(), types.NetworkCreate{}); err != nil {
+			_, err = dClient.NetworkCreate(
+				ctx,
+				hostCfg.NetworkMode.NetworkName(),
+				types.NetworkCreate{
+					Driver: "bridge",
+					Options: map[string]string{
+						"com.docker.network.bridge.enable_ip_masquerade": "true",
+						"com.docker.network.driver.mtu":                  "1500",
+					},
+				},
+			)
+			if err != nil {
 				return types.ContainerJSON{}, nil, fmt.Errorf(
 					"failed to create Docker network %q for container: %w",
 					hostCfg.NetworkMode.NetworkName(),

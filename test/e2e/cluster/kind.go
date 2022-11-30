@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -15,24 +14,19 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/kind/pkg/cluster"
 
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/seedrng"
 )
 
+const E2EKubeconfig = "e2e-kubeconfig"
+
 // kindCluster represents a KinD cluster.
 type kindCluster struct {
 	name     string
 	provider *cluster.Provider
-
-	restConfig    *rest.Config
-	client        kubernetes.Interface
-	dynamicClient dynamic.Interface
 }
 
 // NewKinDCluster creates a KinD cluster and returns a Cluster ready to be used.
@@ -49,15 +43,9 @@ func NewKinDCluster(
 
 	provider := cluster.NewProvider(providerOpts...)
 
-	// Do not export kubeconfig to file by default, makes cleanup easier. This can be overridden by using create option
-	// to configure this via `cluster.CreateWithKubeconfigPath` when calling `NewKindCluster`.
-	tempDir, err := os.MkdirTemp("", fmt.Sprintf("%s-kubeconfig-*", name))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp dir: %w", err)
-	}
-	defer os.RemoveAll(tempDir)
-	tempKubeconfig := filepath.Join(tempDir, "kubeconfig")
-	mergedCreateOpts := []cluster.CreateOption{cluster.CreateWithKubeconfigPath(tempKubeconfig)}
+	// Export kubeconfig to file by default. This allows creating clients from other e2e tests. Can be overridden by
+	// using create option to configure this via `cluster.CreateWithKubeconfigPath` when calling `NewKindCluster`.
+	mergedCreateOpts := []cluster.CreateOption{cluster.CreateWithKubeconfigPath(E2EKubeconfig)}
 	mergedCreateOpts = append(mergedCreateOpts, createOpts...)
 
 	kindClusterErr := make(chan error, 1)
@@ -67,7 +55,7 @@ func NewKinDCluster(
 
 	select {
 	case <-ctx.Done():
-		if err := provider.Delete(name, tempKubeconfig); err != nil {
+		if err := provider.Delete(name, E2EKubeconfig); err != nil {
 			return nil, fmt.Errorf("failed to delete KinD cluster after spec timeout: %w", err)
 		}
 		return nil, nil
@@ -80,7 +68,7 @@ func NewKinDCluster(
 	const warningDeleteKinD = "WARNING: failed to delete KinD cluster: %v"
 	kubeconfig, err := provider.KubeConfig(name, false)
 	if err != nil {
-		if deleteErr := provider.Delete(name, tempKubeconfig); deleteErr != nil {
+		if deleteErr := provider.Delete(name, E2EKubeconfig); deleteErr != nil {
 			_, _ = fmt.Fprintf(os.Stderr, warningDeleteKinD, deleteErr)
 		}
 		return nil, fmt.Errorf("failed to retrieve kubeconfig: %w", err)
@@ -102,14 +90,6 @@ func NewKinDCluster(
 		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(restConfig)
-	if err != nil {
-		if deleteErr := provider.Delete(name, ""); deleteErr != nil {
-			_, _ = fmt.Fprintf(os.Stderr, warningDeleteKinD, deleteErr)
-		}
-		return nil, fmt.Errorf("failed to create dynamic Kubernetes client: %w", err)
-	}
-
 	err = wait.PollInfiniteWithContext(ctx, time.Second*1, func(ctx context.Context) (bool, error) {
 		_, getSAErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceDefault).
 			Get(ctx, "default", metav1.GetOptions{})
@@ -129,34 +109,12 @@ func NewKinDCluster(
 	}
 
 	return &kindCluster{
-		name:          name,
-		provider:      provider,
-		restConfig:    restConfig,
-		client:        kubeClient,
-		dynamicClient: dynamicClient,
+		name:     name,
+		provider: provider,
 	}, nil
 }
 
 func (c *kindCluster) Delete(context.Context) error {
+	_ = os.Remove(E2EKubeconfig)
 	return c.provider.Delete(c.name, "")
-}
-
-func (c *kindCluster) Client() kubernetes.Interface {
-	return c.client
-}
-
-func (c *kindCluster) DynamicClient() dynamic.Interface {
-	return c.dynamicClient
-}
-
-func (c *kindCluster) ControllerRuntimeClient(opts client.Options) (client.Client, error) {
-	crClient, err := client.New(c.restConfig, opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create controller runtime Kubernetes client: %w", err)
-	}
-	return crClient, nil
-}
-
-func (c *kindCluster) RESTConfig() *rest.Config {
-	return c.restConfig
 }
