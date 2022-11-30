@@ -1,13 +1,13 @@
 clusterctl 1.2.6
-ginkgo 2.5.0
+ginkgo 2.5.1
 gojq 0.12.9
 golang 1.19.3
 golangci-lint 1.50.1
-goreleaser 1.12.3
+goreleaser 1.13.1
 helm 3.10.2
 kube-code-generator 0.25.4
 kube-controller-tools 0.10.0
 kubebuilder 3.7.0
 pre-commit 2.20.0
 shfmt 3.5.1
-upx 4.0.0
+upx 4.0.1

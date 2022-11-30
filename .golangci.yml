@@ -6,6 +6,8 @@ run:
   go: '1.17'
   skip-files:
     - "^zz_generated.*"
+  build-tags:
+    - "e2e"
 
 linters:
   disable-all: true

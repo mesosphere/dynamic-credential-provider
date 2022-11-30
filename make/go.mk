@@ -80,18 +80,20 @@ E2E_FLAKE_ATTEMPTS ?= 1
 .PHONY: e2e-test
 e2e-test: ## Runs e2e tests
 e2e-test: install-tool.golang install-tool.ginkgo
+ifneq ($(SKIP_BUILD),true)
+e2e-test: build-snapshot
+endif
 	$(info $(M) running e2e tests$(if $(E2E_LABEL), labelled "$(E2E_LABEL)")$(if $(E2E_FOCUS), matching "$(E2E_FOCUS)"))
-	$(MAKE) build-snapshot
 	ginkgo run \
 		--r \
 		--race \
-		--progress \
+		--show-node-events \
 		--trace \
 		--randomize-all \
 		--randomize-suites \
 		--fail-on-pending \
 		--keep-going \
-		$(if $(filter $(CI),true),--always-emit-ginkgo-writer) \
+		$(if $(filter $(CI),true),--vv) \
 		--covermode=atomic \
 		--coverprofile coverage-e2e.out \
 		--procs=$(E2E_PARALLEL_NODES) \
@@ -164,5 +166,5 @@ go-generate: install-tool.golang install-tool.kube-controller-tools install-tool
 
 .PHONY: go-mod-upgrade
 go-mod-upgrade: ## Interactive check for direct module dependency upgrades
-go-mod-upgrade: install-tool.golang ; $(info $(M) checking for direct module dependency upgrades)
+go-mod-upgrade: install-tool.golang install-tool.go.go-mod-upgrade ; $(info $(M) checking for direct module dependency upgrades)
 	go-mod-upgrade
