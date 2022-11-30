@@ -198,5 +198,5 @@ func authString(username, password string) string {
 	}
 	encodedJSON, _ := json.Marshal(authConfig)
 
-	return base64.StdEncoding.EncodeToString(encodedJSON)
+	return base64.URLEncoding.EncodeToString(encodedJSON)
 }
