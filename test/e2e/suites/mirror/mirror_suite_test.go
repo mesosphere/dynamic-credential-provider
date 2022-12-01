@@ -86,11 +86,7 @@ var _ = SynchronizedBeforeSuite(
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Starting Docker registry")
-		mirrorRegistry, err := registry.NewRegistry(ctx)
-		Expect(err).ShouldNot(HaveOccurred())
-		DeferCleanup(func(ctx SpecContext) error {
-			return mirrorRegistry.Delete(ctx)
-		}, NodeTimeout(time.Second))
+		mirrorRegistry := registry.NewRegistry(ctx)
 
 		By("Setting up kubelet credential providers")
 		providerBinDir := GinkgoT().TempDir()
@@ -146,7 +142,7 @@ var _ = SynchronizedBeforeSuite(
 		)).To(Succeed())
 
 		By("Starting KinD cluster")
-		kindCluster, kubeconfig, err := cluster.NewKinDCluster(
+		_, kubeconfig := cluster.NewKinDCluster(
 			ctx,
 			[]kindcluster.ProviderOption{kindcluster.ProviderWithDocker()},
 			[]kindcluster.CreateOption{
@@ -184,10 +180,6 @@ var _ = SynchronizedBeforeSuite(
 				}),
 			},
 		)
-		Expect(err).ShouldNot(HaveOccurred())
-		DeferCleanup(func(ctx SpecContext) error {
-			return kindCluster.Delete(ctx)
-		}, NodeTimeout(time.Minute))
 
 		configBytes, _ := json.Marshal(e2eSetupConfig{
 			Registry: e2eRegistryConfig{
