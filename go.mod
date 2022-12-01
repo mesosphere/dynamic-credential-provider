@@ -1,7 +1,7 @@
 // Copyright 2022 D2iQ, Inc. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-module github.com/mesosphere/kubelet-image-credential-provider-shim
+module github.com/mesosphere/dynamic-credential-provider
 
 go 1.19
 

@@ -24,10 +24,10 @@ import (
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	kindcluster "sigs.k8s.io/kind/pkg/cluster"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/cluster"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/env"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/goreleaser"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/registry"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/cluster"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/env"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/goreleaser"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/registry"
 )
 
 func TestE2E(t *testing.T) {
@@ -101,12 +101,12 @@ var _ = SynchronizedBeforeSuite(
 			struct{ MirrorAddress string }{MirrorAddress: mirrorRegistry.Address()},
 		)).To(Succeed())
 		templatedFile, err = os.Create(
-			filepath.Join(providerBinDir, "shim-credential-provider-config.yaml"),
+			filepath.Join(providerBinDir, "dynamic-credential-provider-config.yaml"),
 		)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(configTmpl.ExecuteTemplate(
 			templatedFile,
-			"shim-credential-provider-config.yaml.tmpl",
+			"dynamic-credential-provider-config.yaml.tmpl",
 			struct{ MirrorAddress string }{MirrorAddress: mirrorRegistry.Address()},
 		)).To(Succeed())
 		templatedFile, err = os.Create(
@@ -127,11 +127,11 @@ var _ = SynchronizedBeforeSuite(
 			},
 		)).To(Succeed())
 		Expect(templatedFile.Close()).To(Succeed())
-		bin, ok := artifacts.SelectBinary("shim-credential-provider", "linux", runtime.GOARCH)
+		bin, ok := artifacts.SelectBinary("dynamic-credential-provider", "linux", runtime.GOARCH)
 		Expect(ok).To(BeTrue())
 		Expect(copy.Copy(
 			bin.Path,
-			filepath.Join(providerBinDir, "shim-credential-provider"),
+			filepath.Join(providerBinDir, "dynamic-credential-provider"),
 		)).To(Succeed())
 
 		bin, ok = artifacts.SelectBinary("static-credential-provider", "linux", runtime.GOARCH)

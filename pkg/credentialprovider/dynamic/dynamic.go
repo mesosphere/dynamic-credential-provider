@@ -1,7 +1,7 @@
 // Copyright 2022 D2iQ, Inc. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package shim
+package dynamic
 
 import (
 	"context"
@@ -20,10 +20,10 @@ import (
 	"k8s.io/kubelet/pkg/apis/credentialprovider/install"
 	credentialproviderv1beta1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/apis/config/v1alpha1"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/plugin"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/log"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
+	"github.com/mesosphere/dynamic-credential-provider/apis/config/v1alpha1"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/plugin"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/log"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/urlglobber"
 )
 
 var (
@@ -39,8 +39,8 @@ func init() {
 	install.Install(scheme)
 }
 
-type shimProvider struct {
-	cfg *v1alpha1.KubeletImageCredentialProviderShimConfig
+type dynamicProvider struct {
+	cfg *v1alpha1.DynamicCredentialProviderConfig
 
 	providersMutex sync.RWMutex
 	providers      map[string]Provider
@@ -57,25 +57,25 @@ func NewProviderFromConfigFile(fName string) (plugin.CredentialProvider, error) 
 		return nil, fmt.Errorf("failed to decode config file %q: %w", fName, err)
 	}
 
-	config, ok := obj.(*v1alpha1.KubeletImageCredentialProviderShimConfig)
+	config, ok := obj.(*v1alpha1.DynamicCredentialProviderConfig)
 	if !ok {
 		return nil, fmt.Errorf(
-			"failed to convert %T to *KubeletImageCredentialProviderShimConfig",
+			"failed to convert %T to *DynamicCredentialProviderConfig",
 			obj,
 		)
 	}
 
-	shimProvider := &shimProvider{cfg: config, providers: map[string]Provider{}}
-	if err := shimProvider.registerCredentialProviderPlugins(); err != nil {
+	prov := &dynamicProvider{cfg: config, providers: map[string]Provider{}}
+	if err := prov.registerCredentialProviderPlugins(); err != nil {
 		return nil, err
 	}
 
-	return shimProvider, nil
+	return prov, nil
 }
 
 // registerCredentialProviderPlugins is called to register external credential provider plugins according to the
 // CredentialProviderConfig config file.
-func (p *shimProvider) registerCredentialProviderPlugins() error {
+func (p *dynamicProvider) registerCredentialProviderPlugins() error {
 	if p.cfg == nil || p.cfg.CredentialProviders == nil {
 		return nil
 	}
@@ -106,7 +106,7 @@ func (p *shimProvider) registerCredentialProviderPlugins() error {
 }
 
 // registerCredentialProvider registers the credential provider.
-func (p *shimProvider) registerCredentialProvider(name string, provider *pluginProvider) {
+func (p *dynamicProvider) registerCredentialProvider(name string, provider *pluginProvider) {
 	p.providersMutex.Lock()
 	defer p.providersMutex.Unlock()
 	_, found := p.providers[name]
@@ -117,7 +117,7 @@ func (p *shimProvider) registerCredentialProvider(name string, provider *pluginP
 	p.providers[name] = provider
 }
 
-func (p *shimProvider) GetCredentials(
+func (p *dynamicProvider) GetCredentials(
 	_ context.Context,
 	img string,
 	_ []string,
@@ -227,7 +227,7 @@ func updateAuthConfigMapForMirror(
 	return nil
 }
 
-func (p *shimProvider) getMirrorCredentialsForImage(
+func (p *dynamicProvider) getMirrorCredentialsForImage(
 	img string,
 ) (credentialproviderv1beta1.AuthConfig, time.Duration, bool, error) {
 	// If mirror is not configured then return no credentials for the mirror.
@@ -259,7 +259,7 @@ func (p *shimProvider) getMirrorCredentialsForImage(
 	return p.getCredentialsForImage(strings.TrimPrefix(imgURL.String(), "//"))
 }
 
-func (p *shimProvider) getCredentialsForImage(img string) (
+func (p *dynamicProvider) getCredentialsForImage(img string) (
 	authConfig credentialproviderv1beta1.AuthConfig, cacheDuration time.Duration, found bool, err error,
 ) {
 	var longestMatchedURL string

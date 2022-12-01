@@ -125,11 +125,11 @@ cat <<EOF >"${DEMODATA_DIR}/image-credential-provider-config.yaml"
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: CredentialProviderConfig
 providers:
-- name: shim-credential-provider
+- name: dynamic-credential-provider
   args:
   - "get-credentials"
   - "-c"
-  - "/etc/kubernetes/shim-credential-provider-config.yaml"
+  - "/etc/kubernetes/dynamic-credential-provider-config.yaml"
   matchImages:
   - "*:5000"
   - "*"
@@ -142,9 +142,9 @@ providers:
   apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
 EOF
 
-cat <<EOF >"${DEMODATA_DIR}/shim-credential-provider-config.yaml"
-apiVersion: config.kubeletimagecredentialprovidershim.d2iq.com/v1alpha1
-kind: KubeletImageCredentialProviderShimConfig
+cat <<EOF >"${DEMODATA_DIR}/dynamic-credential-provider-config.yaml"
+apiVersion: credentialprovider.d2iq.com/v1alpha1
+kind: DynamicCredentialProviderConfig
 mirror:
   endpoint: "${REGISTRY_ADDRESS}:${REGISTRY_PORT}"
   credentialsStrategy: MirrorCredentialsFirst
@@ -205,7 +205,7 @@ echo '{
 EOF
 chmod +x "${DEMODATA_DIR}/image-credential-provider/static-docker-io-credential-provider"
 
-cp "${ROOT_DIR}/dist/shim-credential-provider_linux_amd64_v1/shim-credential-provider" "${DEMODATA_DIR}/image-credential-provider/"
+cp "${ROOT_DIR}/dist/dynamic-credential-provider_linux_amd64_v1/dynamic-credential-provider" "${DEMODATA_DIR}/image-credential-provider/"
 
 cat <<EOF >"${DEMODATA_DIR}/kind-config.yaml"
 kind: Cluster
@@ -225,8 +225,8 @@ nodes:
       containerPath: /etc/containerd/config.toml
     - hostPath: ${DEMODATA_DIR}/image-credential-provider-config.yaml
       containerPath: /etc/kubernetes/image-credential-provider-config.yaml
-    - hostPath: ${DEMODATA_DIR}/shim-credential-provider-config.yaml
-      containerPath: /etc/kubernetes/shim-credential-provider-config.yaml
+    - hostPath: ${DEMODATA_DIR}/dynamic-credential-provider-config.yaml
+      containerPath: /etc/kubernetes/dynamic-credential-provider-config.yaml
     # this directory and any configured providers need to exist during Kubelet's startup
     - hostPath: ${DEMODATA_DIR}/image-credential-provider/
       containerPath: /etc/kubernetes/image-credential-provider/

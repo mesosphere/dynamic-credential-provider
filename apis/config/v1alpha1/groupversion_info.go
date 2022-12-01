@@ -10,7 +10,7 @@ import (
 var (
 	// GroupVersion is group version used to register these objects.
 	GroupVersion = schema.GroupVersion{
-		Group:   "config.kubeletimagecredentialprovidershim.d2iq.com",
+		Group:   "credentialprovider.d2iq.com",
 		Version: "v1alpha1",
 	}
 

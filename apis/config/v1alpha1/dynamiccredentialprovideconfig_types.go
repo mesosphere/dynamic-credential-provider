@@ -13,12 +13,12 @@ import (
 
 //nolint:gochecknoinits // init is the convention for registering API types.
 func init() {
-	SchemeBuilder.Register(&KubeletImageCredentialProviderShimConfig{})
+	SchemeBuilder.Register(&DynamicCredentialProviderConfig{})
 }
 
-// KubeletImageCredentialProviderShimConfig holds the configuration.
+// DynamicCredentialProviderConfig holds the configuration.
 // +kubebuilder:object:root=true
-type KubeletImageCredentialProviderShimConfig struct {
+type DynamicCredentialProviderConfig struct {
 	//nolint:revive // inline is not an official json struct tag value, but is required by Kubernetes.
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -28,7 +28,7 @@ type KubeletImageCredentialProviderShimConfig struct {
 	Mirror *MirrorConfig `json:"mirror,omitempty"`
 
 	// CredentialProviders holds the configuration for the kubelet credential providers. Embeds the
-	// `CredentialProviderConfig` kind from kuelet config API - see
+	// `CredentialProviderConfig` kind from kubelet config API - see
 	// https://github.com/kubernetes/kubelet/blob/v0.25.4/config/v1beta1/types.go#L921 for info.
 	// +optional
 	CredentialProviders *v1beta1.CredentialProviderConfig `json:"credentialProviders,omitempty"`

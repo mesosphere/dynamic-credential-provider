@@ -1,16 +1,16 @@
-domain: kubeletimagecredentialprovidershim.d2iq.com
+domain: d2iq.com
 layout:
 - go.kubebuilder.io/v3
 multigroup: true
 projectName: project
-repo: github.com/mesosphere/kubelet-image-credential-provider-shim
+repo: github.com/mesosphere/dynamic-credential-provider
 resources:
 - api:
     crdVersion: v1
     namespaced: true
-  domain: kubeletimagecredentialprovidershim.d2iq.com
-  group: config
-  kind: KubeletImageCredentialProviderShimConfig
-  path: github.com/mesosphere/kubelet-image-credential-provider-shim/apis/config/v1alpha1
+  domain: d2iq.com
+  group:  credentialprovider
+  kind: DynamicCredentialProviderConfig
+  path: github.com/mesosphere/dynamic-credential-provider/apis/config/v1alpha1
   version: v1alpha1
 version: "3"

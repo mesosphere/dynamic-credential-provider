@@ -26,7 +26,7 @@ import (
 	credentialproviderv1alpha1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1alpha1"
 	credentialproviderv1beta1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/urlglobber"
 )
 
 var APIVersions = map[string]schema.GroupVersion{

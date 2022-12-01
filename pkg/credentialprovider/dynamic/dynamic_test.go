@@ -1,7 +1,7 @@
 // Copyright 2022 D2iQ, Inc. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package shim_test
+package dynamic_test
 
 import (
 	"context"
@@ -14,10 +14,10 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	credentialproviderv1beta1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/shim"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/dynamic"
 )
 
-func Test_shimProvider_GetCredentials(t *testing.T) {
+func Test_dynamicProvider_GetCredentials(t *testing.T) {
 	//nolint:revive // Dummy duration ok in tests.
 	expectedDummyDuration := 5 * time.Second
 
@@ -120,7 +120,7 @@ func Test_shimProvider_GetCredentials(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			p, err := shim.NewProviderFromConfigFile(tt.cfgFile)
+			p, err := dynamic.NewProviderFromConfigFile(tt.cfgFile)
 			require.NoError(t, err)
 
 			got, err := p.GetCredentials(context.Background(), tt.img, nil)

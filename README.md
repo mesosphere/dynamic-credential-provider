@@ -3,4 +3,4 @@
  SPDX-License-Identifier: Apache-2.0
  -->
 
-# kubelet-image-credential-provider-shim
+# dynamic-credential-provider

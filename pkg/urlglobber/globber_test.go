@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/urlglobber"
 )
 
 func TestGlobbedDomainForImage(t *testing.T) {

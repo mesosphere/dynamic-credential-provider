@@ -3,6 +3,6 @@
 
 // Package v1alpha1 contains API Schema definitions for the config v1alpha1 API group
 // +kubebuilder:object:generate=true
-// +groupName=config.kubeletimagecredentialprovidershim.d2iq.com
+// +groupName=credentialprovider.d2iq.com
 // +k8s:defaulter-gen=TypeMeta
 package v1alpha1

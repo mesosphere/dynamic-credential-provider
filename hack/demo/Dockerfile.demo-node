@@ -6,5 +6,5 @@
 FROM --platform=linux/${TARGETARCH} mesosphere/kind-node:v1.25.4
 
 ARG TARGETARCH
-COPY dist/shim-credential-provider_linux_${TARGETARCH}_v1/shim-credential-provider /etc/kubernetes/image-credential-provider/
+COPY dist/dynamic-credential-provider_linux_${TARGETARCH}_v1/dynamic-credential-provider /etc/kubernetes/image-credential-provider/
 COPY dist/static-credential-provider_linux_${TARGETARCH}_v1/static-credential-provider /etc/kubernetes/image-credential-provider/

@@ -1,7 +1,7 @@
 # Copyright 2022 D2iQ, Inc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-project_name: shim-credential-provider
+project_name: dynamic-credential-provider
 
 changelog:
   use: github
@@ -21,11 +21,11 @@ changelog:
 release:
   footer: |
     ### Summary
-    **Full Changelog**: https://github.com/mesosphere/kubelet-image-credential-provider-shim/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/{{ .PreviousTag }}...{{ .Tag }}
 
 builds:
-  - id: shim-credential-provider
-    dir: ./cmd/shim-credential-provider
+  - id: dynamic-credential-provider
+    dir: ./cmd/dynamic-credential-provider
     env:
       - CGO_ENABLED=0
     flags:
@@ -78,7 +78,7 @@ archives:
     files:
       - none*
     builds:
-      - kubelet-image-credential-provider-shim
+      - dynamic-credential-provider
   - name_template: 'static-credential-provider_v{{trimprefix .Version "v"}}_{{ .Os }}_{{ .Arch }}'
     # This is a hack documented in https://github.com/goreleaser/goreleaser/blob/df0216d5855e9283d2106fb5acdb0e7b528a56e8/www/docs/customization/archive.md#packaging-only-the-binaries
     id: static-credential-provider
@@ -90,12 +90,12 @@ dockers:
   - image_templates:
       # Specify the image tag including `-amd64` suffix if the build is not a snapshot build or is not being built on
       # arm64 machine. This allows for using the snapshot image build without the archtecture specific suffix
-      # consistently on local machines, i.e. can always use `mesosphere/shim-credential-provider:v<VERSION>` on the machine the snapshot
+      # consistently on local machines, i.e. can always use `mesosphere/dynamic-credential-provider:v<VERSION>` on the machine the snapshot
       # is built on.
       #
       # For a release build the `-amd64` suffix will always be included and the `docker_manifests` specification below
       # will create the final multiplatform manifest to be pushed to the registry.
-      - 'mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "amd64")) }}-amd64{{ end }}'
+      - 'mesosphere/dynamic-credential-provider:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "amd64")) }}-amd64{{ end }}'
     use: buildx
     dockerfile: Dockerfile
     extra_files:
@@ -104,7 +104,7 @@ dockers:
       - "--platform=linux/amd64"
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title=shim-credential-provider"
+      - "--label=org.opencontainers.image.title=dynamic-credential-provider"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
@@ -113,12 +113,12 @@ dockers:
   - image_templates:
       # Specify the image tag including `-amd64v8` suffix if the build is not a snapshot build or is not being built on
       # arm64 machine. This allows for using the snapshot image build without the archtecture specific suffix
-      # consistently on local machines, i.e. can always use `mesosphere/shim-credential-provider:v<VERSION>` on the machine the snapshot
+      # consistently on local machines, i.e. can always use `mesosphere/dynamic-credential-provider:v<VERSION>` on the machine the snapshot
       # is built on.
       #
       # For a release build the `-amd64v8` suffix will always be included and the `docker_manifests` specification below
       # will create the final multiplatform manifest to be pushed to the registry.
-    - 'mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "arm64")) }}-arm64v8{{ end }}'
+    - 'mesosphere/dynamic-credential-provider:v{{trimprefix .Version "v"}}{{ if or (not .IsSnapshot) (not (eq .Runtime.Goarch "arm64")) }}-arm64v8{{ end }}'
     use: buildx
     goarch: arm64
     dockerfile: Dockerfile
@@ -128,17 +128,17 @@ dockers:
       - "--platform=linux/arm64"
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title=shim-credential-provider"
+      - "--label=org.opencontainers.image.title=dynamic-credential-provider"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--build-arg=GO_VERSION={{.Env.GO_VERSION}}"
       - "--build-arg=CLOUD_PROVIDER_GCP_VERSION={{.Env.CLOUD_PROVIDER_GCP_VERSION}}"
 docker_manifests:
-  - name_template: mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}
+  - name_template: mesosphere/dynamic-credential-provider:v{{trimprefix .Version "v"}}
     image_templates:
-    - mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}-amd64
-    - mesosphere/shim-credential-provider:v{{trimprefix .Version "v"}}-arm64v8
+    - mesosphere/dynamic-credential-provider:v{{trimprefix .Version "v"}}-amd64
+    - mesosphere/dynamic-credential-provider:v{{trimprefix .Version "v"}}-arm64v8
 checksum:
   name_template: 'checksums.txt'
 snapshot:

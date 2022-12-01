@@ -10,25 +10,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-var _ webhook.Validator = &KubeletImageCredentialProviderShimConfig{}
+var _ webhook.Validator = &DynamicCredentialProviderConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook can be registered for the type.
-func (c *KubeletImageCredentialProviderShimConfig) ValidateCreate() error {
+func (c *DynamicCredentialProviderConfig) ValidateCreate() error {
 	return c.validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook can be registered for the type.
-func (c *KubeletImageCredentialProviderShimConfig) ValidateUpdate(_ runtime.Object) error {
+func (c *DynamicCredentialProviderConfig) ValidateUpdate(_ runtime.Object) error {
 	return c.validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook can be registered for the type.
-func (*KubeletImageCredentialProviderShimConfig) ValidateDelete() error {
+func (*DynamicCredentialProviderConfig) ValidateDelete() error {
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
 }
 
-func (c *KubeletImageCredentialProviderShimConfig) validate() error {
+func (c *DynamicCredentialProviderConfig) validate() error {
 	var allErrs field.ErrorList
 
 	allErrs = append(
@@ -44,7 +44,7 @@ func (c *KubeletImageCredentialProviderShimConfig) validate() error {
 	}
 
 	return errors.NewInvalid(
-		GroupVersion.WithKind("KubeletImageCredentialProviderShimConfig").GroupKind(),
+		GroupVersion.WithKind("DynamicCredentialProviderConfig").GroupKind(),
 		c.Name,
 		allErrs,
 	)

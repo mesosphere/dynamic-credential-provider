@@ -17,8 +17,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/docker"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/env"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/docker"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/env"
 )
 
 var _ = Describe("Successful",

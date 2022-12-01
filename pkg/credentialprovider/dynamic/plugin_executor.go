@@ -1,7 +1,7 @@
 // Copyright 2022 D2iQ, Inc. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package shim
+package dynamic
 
 import (
 	"bytes"
@@ -22,9 +22,9 @@ import (
 	"k8s.io/kubelet/config/v1beta1"
 	credentialproviderapi "k8s.io/kubelet/pkg/apis/credentialprovider"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/apis/config/v1alpha1"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/log"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
+	"github.com/mesosphere/dynamic-credential-provider/apis/config/v1alpha1"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/log"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/urlglobber"
 )
 
 // newPluginProvider returns a new pluginProvider based on the credential provider config.

@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/plugin"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/shim"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/dynamic"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/plugin"
 )
 
 type getCredentialsOptions struct {
@@ -20,13 +20,13 @@ type getCredentialsOptions struct {
 func (o *getCredentialsOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(
 		&o.configFile, "config", "c", o.configFile,
-		"path to the configuration file for the Kubelet credential provider shim",
+		"path to the configuration file for the dynamic Kubelet credential provider",
 	)
 }
 
 func defaultCredentialsOptions() *getCredentialsOptions {
 	return &getCredentialsOptions{
-		configFile: "/etc/kubernetes/image-credential-provider/kubelet-image-credential-provider-shim.yaml",
+		configFile: "/etc/kubernetes/image-credential-provider/dynamic-credential-provider.yaml",
 	}
 }
 
@@ -38,14 +38,14 @@ func newGetCredentialsCmd() *cobra.Command {
 		Short: "Get authentication credentials",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			provider, err := shim.NewProviderFromConfigFile(opts.configFile)
+			provider, err := dynamic.NewProviderFromConfigFile(opts.configFile)
 			if err != nil {
-				return fmt.Errorf("error initializing shim credential provider: %w", err)
+				return fmt.Errorf("error initializing dynamic credential provider: %w", err)
 			}
 
 			err = plugin.NewProvider(provider).Run(context.Background())
 			if err != nil {
-				return fmt.Errorf("error running shim credential provider: %w", err)
+				return fmt.Errorf("error running dynamic credential provider: %w", err)
 			}
 
 			return nil

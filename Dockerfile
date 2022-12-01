@@ -50,6 +50,6 @@ COPY --from=credential_provider_builder \
      /go/bin/gcr-credential-provider \
      /opt/image-credential-provider/bin/
 COPY static-credential-provider /opt/image-credential-provider/bin/static-credential-provider
-COPY shim-credential-provider /opt/image-credential-provider/bin/shim-credential-provider
+COPY dynamic-credential-provider /opt/image-credential-provider/bin/dynamic-credential-provider
 
-ENTRYPOINT ["/opt/image-credential-provider/bin/shim-credential-provider"]
+ENTRYPOINT ["/opt/image-credential-provider/bin/dynamic-credential-provider"]
