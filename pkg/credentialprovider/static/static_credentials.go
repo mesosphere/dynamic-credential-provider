@@ -13,7 +13,7 @@ import (
 	"k8s.io/kubelet/pkg/apis/credentialprovider/install"
 	"k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/plugin"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/plugin"
 )
 
 var (

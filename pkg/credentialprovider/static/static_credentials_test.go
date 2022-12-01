@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/static"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/static"
 )
 
 var (

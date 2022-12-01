@@ -10,8 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/plugin"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/credentialprovider/static"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/plugin"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/static"
 )
 
 const (

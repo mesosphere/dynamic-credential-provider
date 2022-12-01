@@ -16,7 +16,7 @@ jobs:
         id: release-please
         with:
           release-type: go
-          package-name: kubelet-image-credential-provider-shim
+          package-name: dynamic-credential-provider
           pull-request-title-pattern: "build${scope}: release${component} ${version}"
           changelog-notes-type: github
 

@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/install"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/install"
 )
 
 func newInstallCmd(logger logrus.FieldLogger) *cobra.Command {

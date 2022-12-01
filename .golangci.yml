@@ -62,7 +62,7 @@ linters-settings:
       - Standard
       - Default
       - Prefix(github.com/mesosphere)
-      - Prefix(github.com/mesosphere/kubelet-image-credential-provider-shim)
+      - Prefix(github.com/mesosphere/dynamic-credential-provider)
   gocritic:
     enabled-tags:
       - diagnostic

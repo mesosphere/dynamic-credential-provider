@@ -19,10 +19,10 @@ import (
 	gm "github.com/onsi/gomega"
 	"github.com/sethvargo/go-password/password"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/docker"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/env"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/seedrng"
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/tls"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/docker"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/env"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/seedrng"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/tls"
 )
 
 type registryOptions struct {

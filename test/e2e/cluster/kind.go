@@ -21,7 +21,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kind/pkg/cluster"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/seedrng"
+	"github.com/mesosphere/dynamic-credential-provider/test/e2e/seedrng"
 )
 
 // kindCluster represents a KinD cluster.

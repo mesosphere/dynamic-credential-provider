@@ -19,7 +19,7 @@ package urlglobber_test
 import (
 	"testing"
 
-	"github.com/mesosphere/kubelet-image-credential-provider-shim/pkg/urlglobber"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/urlglobber"
 )
 
 const prefixKubernetesIO = "prefix.kubernetes.io"
