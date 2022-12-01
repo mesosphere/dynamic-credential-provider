@@ -5,8 +5,6 @@ package registry
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -17,6 +15,8 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/docker/go-connections/nat"
 	"github.com/foomo/htpasswd"
+	g "github.com/onsi/ginkgo/v2"
+	gm "github.com/onsi/gomega"
 	"github.com/sethvargo/go-password/password"
 
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/docker"
@@ -77,15 +77,11 @@ func (r *Registry) CACertFile() string {
 	return r.caCertFile
 }
 
-func (r *Registry) Delete(ctx context.Context) error {
-	if err := r.cleanup(ctx); err != nil {
-		return fmt.Errorf("failed to delete Docker registry container: %w", err)
-	}
-	return nil
+func (r *Registry) Delete(ctx context.Context) {
+	gm.Expect(r.cleanup(ctx)).To(gm.Succeed())
 }
 
-//nolint:revive // Complex function for test is OK.
-func NewRegistry(ctx context.Context, opts ...Opt) (*Registry, error) {
+func NewRegistry(ctx context.Context, opts ...Opt) *Registry {
 	seedrng.EnsureSeeded()
 
 	rOpt := defaultRegistryOptions()
@@ -95,22 +91,9 @@ func NewRegistry(ctx context.Context, opts ...Opt) (*Registry, error) {
 
 	containerName := strings.ReplaceAll(namesgenerator.GetRandomName(0), "_", "-")
 
-	tlsCertsDir, cleanupTLSCerts, err := tls.GenerateCertificates(containerName)
-	if err != nil {
-		return nil, err
-	}
+	tlsCertsDir := tls.GenerateCertificates(containerName)
 
-	htpasswdFile, username, passwd, cleanupHtpasswd, err := createHtpasswdFile()
-	if err != nil {
-		if cleanupErr := cleanupTLSCerts(); cleanupErr != nil {
-			_, _ = fmt.Fprintf(
-				os.Stderr,
-				"WARNING: failed to cleanup TLS certificates dir: %v",
-				cleanupErr,
-			)
-		}
-		return nil, err
-	}
+	htpasswdFile, username, passwd := createHtpasswdFile()
 
 	containerCfg := container.Config{
 		Image:        rOpt.image,
@@ -140,12 +123,7 @@ func NewRegistry(ctx context.Context, opts ...Opt) (*Registry, error) {
 		}},
 	}
 
-	const (
-		warningTLSDir      = "WARNING: failed to cleanup TLS certificates dir: %v"
-		warningHtpasswdDir = "WARNING: failed to cleanup htpasswd dir: %v"
-	)
-
-	containerInspect, cleanupContainer, err := docker.RunContainerInBackground(
+	containerInspect := docker.RunContainerInBackground(
 		ctx,
 		containerName,
 		&containerCfg,
@@ -153,64 +131,24 @@ func NewRegistry(ctx context.Context, opts ...Opt) (*Registry, error) {
 		env.DockerHubUsername(),
 		env.DockerHubPassword(),
 	)
-	if err != nil {
-		if cleanupErr := cleanupTLSCerts(); cleanupErr != nil {
-			_, _ = fmt.Fprintf(os.Stderr, warningTLSDir, cleanupErr)
-		}
-		if cleanupErr := cleanupHtpasswd(); cleanupErr != nil {
-			_, _ = fmt.Fprintf(os.Stderr, warningHtpasswdDir, cleanupErr)
-		}
-		return nil, fmt.Errorf("failed to start Docker registry container: %w", err)
-	}
 
 	publishedPort, ok := containerInspect.NetworkSettings.Ports[nat.Port("5000/tcp")]
-	if !ok {
-		if cleanupErr := cleanupTLSCerts(); cleanupErr != nil {
-			_, _ = fmt.Fprintf(os.Stderr, warningTLSDir, cleanupErr)
-		}
-		if cleanupErr := cleanupHtpasswd(); cleanupErr != nil {
-			_, _ = fmt.Fprintf(os.Stderr, warningHtpasswdDir, cleanupErr)
-		}
-		if cleanupErr := cleanupContainer(ctx); cleanupErr != nil {
-			_, _ = fmt.Fprintf(
-				os.Stderr,
-				"WARNING: failed to delete Docker registry container: %v",
-				cleanupErr,
-			)
-		}
-		return nil, errors.New("failed to discover Docker registry port")
-	}
+	gm.Expect(ok).To(gm.BeTrue())
 
-	r := &Registry{
+	return &Registry{
 		username:        username,
 		password:        passwd,
 		address:         net.JoinHostPort(containerName, "5000"),
 		hostPortAddress: net.JoinHostPort(publishedPort[0].HostIP, publishedPort[0].HostPort),
 		caCertFile:      filepath.Join(tlsCertsDir, "ca.crt"),
-		cleanup: func(ctx context.Context) error {
-			if cleanupErr := cleanupTLSCerts(); cleanupErr != nil {
-				_, _ = fmt.Fprintf(os.Stderr, warningTLSDir, cleanupErr)
-			}
-			if cleanupErr := cleanupHtpasswd(); cleanupErr != nil {
-				_, _ = fmt.Fprintf(os.Stderr, warningHtpasswdDir, cleanupErr)
-			}
-			return cleanupContainer(ctx)
-		},
 	}
-
-	return r, nil
 }
 
 //nolint:revive // 5 return values is OK for this test function.
-func createHtpasswdFile() (htpasswdFile, username, passwd string, cleanup func() error, err error) {
+func createHtpasswdFile() (htpasswdFile, username, passwd string) {
 	dir, err := os.MkdirTemp("", "registry-auth-*")
-	if err != nil {
-		return "", "", "", nil, fmt.Errorf(
-			"failed to create temporary directory for registry auth: %w",
-			err,
-		)
-	}
-	cleanup = func() error { return os.RemoveAll(dir) }
+	gm.Expect(err).NotTo(gm.HaveOccurred())
+	g.DeferCleanup(os.RemoveAll, dir)
 
 	f := filepath.Join(dir, "htpasswd")
 	username = namesgenerator.GetRandomName(0)
@@ -221,19 +159,9 @@ func createHtpasswdFile() (htpasswdFile, username, passwd string, cleanup func()
 		false,
 		false,
 	) //nolint:revive // Constants for password generation.
-	if err != nil {
-		_ = cleanup()
-		return "", "", "", nil, fmt.Errorf("failed to generate password for registry auth: %w", err)
-	}
+	gm.Expect(err).NotTo(gm.HaveOccurred())
 
-	err = htpasswd.SetPassword(f, username, passwd, htpasswd.HashBCrypt)
-	if err != nil {
-		_ = cleanup()
-		return "", "", "", nil, fmt.Errorf(
-			"failed to write password to htpasswd file for registry auth: %w",
-			err,
-		)
-	}
+	gm.Expect(htpasswd.SetPassword(f, username, passwd, htpasswd.HashBCrypt)).To(gm.Succeed())
 
-	return f, username, passwd, cleanup, nil
+	return f, username, passwd
 }
