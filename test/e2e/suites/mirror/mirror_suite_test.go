@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"text/template"
 	"time"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/cluster"
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/env"
+	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/goreleaser"
 	"github.com/mesosphere/kubelet-image-credential-provider-shim/test/e2e/registry"
 )
 
@@ -73,6 +75,16 @@ func testdataPath(f string) string {
 
 var _ = SynchronizedBeforeSuite(
 	func(ctx SpecContext) []byte {
+		By("Parse goreleaser artifacts")
+		artifacts, err := goreleaser.ParseArtifactsFile(filepath.Join("..",
+			"..",
+			"..",
+			"..",
+			"dist",
+			"artifacts.json",
+		))
+		Expect(err).NotTo(HaveOccurred())
+
 		By("Starting Docker registry")
 		mirrorRegistry, err := registry.NewRegistry(ctx)
 		Expect(err).ShouldNot(HaveOccurred())
@@ -119,28 +131,17 @@ var _ = SynchronizedBeforeSuite(
 			},
 		)).To(Succeed())
 		Expect(templatedFile.Close()).To(Succeed())
+		bin, ok := artifacts.SelectBinary("shim-credential-provider", "linux", runtime.GOARCH)
+		Expect(ok).To(BeTrue())
 		Expect(copy.Copy(
-			filepath.Join(
-				"..",
-				"..",
-				"..",
-				"..",
-				"dist",
-				"shim-credential-provider_linux_amd64_v1",
-				"shim-credential-provider",
-			),
+			bin.Path,
 			filepath.Join(providerBinDir, "shim-credential-provider"),
 		)).To(Succeed())
+
+		bin, ok = artifacts.SelectBinary("static-credential-provider", "linux", runtime.GOARCH)
+		Expect(ok).To(BeTrue())
 		Expect(copy.Copy(
-			filepath.Join(
-				"..",
-				"..",
-				"..",
-				"..",
-				"dist",
-				"static-credential-provider_linux_amd64_v1",
-				"static-credential-provider",
-			),
+			bin.Path,
 			filepath.Join(providerBinDir, "static-credential-provider"),
 		)).To(Succeed())
 
