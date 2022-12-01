@@ -36,8 +36,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         ./cmd/auth-provider-gcp
 
 # Use distroless/static:nonroot image for a base.
-FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:6e5f8857479b83d032a14a17f8e0731634c6b8b5e225f53a039085ec1f7698c6 as linux-amd64
-FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:d79a4342bd72644f30436ae22e55ab68a7c3a125e91d76936bcb2be66aa2af57 as linux-arm64
+FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:31b8a624208dea1baac3047a18fa24304d129f9ae60b5889fc6ea1d0e8b658b6 as linux-amd64
+FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:df73bc639be43c3c4f9faaee290de8126d80d280f613654fdd9bfdac61793003 as linux-arm64
 
 FROM --platform=linux/${TARGETARCH} linux-${TARGETARCH}
 
@@ -49,7 +49,6 @@ COPY --from=credential_provider_builder \
      /go/bin/acr-credential-provider \
      /go/bin/gcr-credential-provider \
      /opt/image-credential-provider/bin/
-COPY static-credential-provider /opt/image-credential-provider/bin/static-credential-provider
-COPY dynamic-credential-provider /opt/image-credential-provider/bin/dynamic-credential-provider
+COPY static-credential-provider dynamic-credential-provider /opt/image-credential-provider/bin/
 
 ENTRYPOINT ["/opt/image-credential-provider/bin/dynamic-credential-provider"]
