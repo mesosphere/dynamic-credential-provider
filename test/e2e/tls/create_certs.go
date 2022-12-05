@@ -11,28 +11,27 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
 	"time"
-
-	g "github.com/onsi/ginkgo/v2"
-	gm "github.com/onsi/gomega"
 )
 
-func GenerateCertificates(hostnames ...string) string {
-	dir, err := os.MkdirTemp("", "temp-tls-*")
-	gm.Expect(err).NotTo(gm.HaveOccurred())
-	g.DeferCleanup(os.RemoveAll, dir)
+func GenerateCertificates(dir string, hostnames ...string) error {
+	ca, caPrivKey, err := generateCA(dir)
+	if err != nil {
+		return fmt.Errorf("failed top create CA: %w", err)
+	}
 
-	ca, caPrivKey := generateCA(dir)
+	if err := generateServerCerts(ca, caPrivKey, hostnames, dir); err != nil {
+		return fmt.Errorf("failed to generate TLS certificates: %w", err)
+	}
 
-	generateServerCerts(ca, caPrivKey, hostnames, dir)
-
-	return dir
+	return nil
 }
 
-func generateCA(outputDir string) (*x509.Certificate, *ecdsa.PrivateKey) {
+func generateCA(outputDir string) (*x509.Certificate, *ecdsa.PrivateKey, error) {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
@@ -47,35 +46,48 @@ func generateCA(outputDir string) (*x509.Certificate, *ecdsa.PrivateKey) {
 
 	// create our private and public key
 	caPrivKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate CA private key: %w", err)
+	}
 
 	// create the CA
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to issue CA certificate: %w", err)
+	}
 
-	// pem encode
 	caFile, err := os.Create(filepath.Join(outputDir, "ca.crt"))
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create CA certificate file: %w", err)
+	}
 	defer caFile.Close()
 	err = pem.Encode(caFile, &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: caBytes,
 	})
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to PEM-encode CA certificate: %w", err)
+	}
 
 	encodedCAPrivKey, err := x509.MarshalECPrivateKey(caPrivKey)
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal CA private key: %w", err)
+	}
 
 	caKey, err := os.Create(filepath.Join(outputDir, "ca.key"))
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create CA private key file: %w", err)
+	}
 	defer caKey.Close()
 	err = pem.Encode(caKey, &pem.Block{
 		Type:  "EC PRIVATE KEY",
 		Bytes: encodedCAPrivKey,
 	})
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to PEM-encode CA private key: %w", err)
+	}
 
-	return ca, caPrivKey
+	return ca, caPrivKey, nil
 }
 
 func generateServerCerts(
@@ -83,7 +95,7 @@ func generateServerCerts(
 	caPrivKey crypto.PrivateKey,
 	hostnames []string,
 	outputDir string,
-) {
+) error {
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(2),
 		Subject: pkix.Name{
@@ -96,7 +108,9 @@ func generateServerCerts(
 	}
 
 	certPrivKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return fmt.Errorf("failed to generate TLS private key: %w", err)
+	}
 
 	certBytes, err := x509.CreateCertificate(
 		rand.Reader,
@@ -105,25 +119,39 @@ func generateServerCerts(
 		&certPrivKey.PublicKey,
 		caPrivKey,
 	)
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return fmt.Errorf("failed to issue TLS certificate: %w", err)
+	}
 
 	certFile, err := os.Create(filepath.Join(outputDir, "tls.crt"))
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return fmt.Errorf("failed to create TLS certificate file: %w", err)
+	}
 	defer certFile.Close()
 	err = pem.Encode(certFile, &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: certBytes,
 	})
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return fmt.Errorf("failed to PEM-encode TLS certificate: %w", err)
+	}
 
 	encodedCertPrivKey, err := x509.MarshalECPrivateKey(certPrivKey)
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return fmt.Errorf("failed to marshal TLS private key: %w", err)
+	}
 	keyFile, err := os.Create(filepath.Join(outputDir, "tls.key"))
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return fmt.Errorf("failed to create TLS private key file: %w", err)
+	}
 	defer keyFile.Close()
 	err = pem.Encode(keyFile, &pem.Block{
 		Type:  "EC PRIVATE KEY",
 		Bytes: encodedCertPrivKey,
 	})
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return fmt.Errorf("failed to create PEM-encode TLS private key: %w", err)
+	}
+
+	return err
 }

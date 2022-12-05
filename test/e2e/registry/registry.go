@@ -5,8 +5,8 @@ package registry
 
 import (
 	"context"
+	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -15,9 +15,8 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/docker/go-connections/nat"
 	"github.com/foomo/htpasswd"
-	g "github.com/onsi/ginkgo/v2"
-	gm "github.com/onsi/gomega"
 	"github.com/sethvargo/go-password/password"
+	"go.uber.org/multierr"
 
 	"github.com/mesosphere/dynamic-credential-provider/test/e2e/docker"
 	"github.com/mesosphere/dynamic-credential-provider/test/e2e/env"
@@ -77,11 +76,15 @@ func (r *Registry) CACertFile() string {
 	return r.caCertFile
 }
 
-func (r *Registry) Delete(ctx context.Context) {
-	gm.Expect(r.cleanup(ctx)).To(gm.Succeed())
+func (r *Registry) Delete(ctx context.Context) error {
+	return r.cleanup(ctx)
 }
 
-func NewRegistry(ctx context.Context, opts ...Opt) *Registry {
+func NewRegistry(
+	ctx context.Context,
+	dir string,
+	opts ...Opt,
+) (*Registry, error) {
 	seedrng.EnsureSeeded()
 
 	rOpt := defaultRegistryOptions()
@@ -91,9 +94,14 @@ func NewRegistry(ctx context.Context, opts ...Opt) *Registry {
 
 	containerName := strings.ReplaceAll(namesgenerator.GetRandomName(0), "_", "-")
 
-	tlsCertsDir := tls.GenerateCertificates(containerName)
+	if err := tls.GenerateCertificates(dir, containerName); err != nil {
+		return nil, fmt.Errorf("failed to generate registry certificates: %w", err)
+	}
 
-	htpasswdFile, username, passwd := createHtpasswdFile()
+	htpasswdFile, username, passwd, err := createHtpasswdFile(dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create htpasswd file: %w", err)
+	}
 
 	containerCfg := container.Config{
 		Image:        rOpt.image,
@@ -117,13 +125,13 @@ func NewRegistry(ctx context.Context, opts ...Opt) *Registry {
 			ReadOnly: true,
 		}, {
 			Type:     mount.TypeBind,
-			Source:   tlsCertsDir,
+			Source:   dir,
 			Target:   "/certs",
 			ReadOnly: true,
 		}},
 	}
 
-	containerInspect := docker.RunContainerInBackground(
+	containerInspect, err := docker.RunContainerInBackground(
 		ctx,
 		containerName,
 		&containerCfg,
@@ -131,25 +139,33 @@ func NewRegistry(ctx context.Context, opts ...Opt) *Registry {
 		env.DockerHubUsername(),
 		env.DockerHubPassword(),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to run registry container: %w", err)
+	}
 
 	publishedPort, ok := containerInspect.NetworkSettings.Ports[nat.Port("5000/tcp")]
-	gm.Expect(ok).To(gm.BeTrue())
+	if !ok {
+		if deleteErr := docker.ForceDeleteContainer(ctx, containerInspect.ID); deleteErr != nil {
+			err = multierr.Combine(err, deleteErr)
+		}
+		return nil, fmt.Errorf("failed to get localhost registry port: %w", err)
+	}
 
-	return &Registry{
+	r := &Registry{
+		cleanup: func(ctx context.Context) error { return docker.ForceDeleteContainer(ctx, containerInspect.ID) },
+
 		username:        username,
 		password:        passwd,
 		address:         net.JoinHostPort(containerName, "5000"),
 		hostPortAddress: net.JoinHostPort(publishedPort[0].HostIP, publishedPort[0].HostPort),
-		caCertFile:      filepath.Join(tlsCertsDir, "ca.crt"),
+		caCertFile:      filepath.Join(dir, "ca.crt"),
 	}
+
+	return r, nil
 }
 
 //nolint:revive // 5 return values is OK for this test function.
-func createHtpasswdFile() (htpasswdFile, username, passwd string) {
-	dir, err := os.MkdirTemp("", "registry-auth-*")
-	gm.Expect(err).NotTo(gm.HaveOccurred())
-	g.DeferCleanup(os.RemoveAll, dir)
-
+func createHtpasswdFile(dir string) (htpasswdFile, username, passwd string, err error) {
 	f := filepath.Join(dir, "htpasswd")
 	username = namesgenerator.GetRandomName(0)
 	passwd, err = password.Generate(
@@ -159,9 +175,13 @@ func createHtpasswdFile() (htpasswdFile, username, passwd string) {
 		false,
 		false,
 	) //nolint:revive // Constants for password generation.
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to generate password: %w", err)
+	}
 
-	gm.Expect(htpasswd.SetPassword(f, username, passwd, htpasswd.HashBCrypt)).To(gm.Succeed())
+	if err := htpasswd.SetPassword(f, username, passwd, htpasswd.HashBCrypt); err != nil {
+		return "", "", "", fmt.Errorf("failed to set password in htpasswd file: %w", err)
+	}
 
-	return f, username, passwd
+	return f, username, passwd, nil
 }

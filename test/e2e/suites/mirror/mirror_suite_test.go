@@ -22,7 +22,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
-	kindcluster "sigs.k8s.io/kind/pkg/cluster"
 
 	"github.com/mesosphere/dynamic-credential-provider/test/e2e/cluster"
 	"github.com/mesosphere/dynamic-credential-provider/test/e2e/env"
@@ -86,7 +85,9 @@ var _ = SynchronizedBeforeSuite(
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Starting Docker registry")
-		mirrorRegistry := registry.NewRegistry(ctx)
+		mirrorRegistry, err := registry.NewRegistry(ctx, GinkgoT().TempDir())
+		Expect(err).ToNot(HaveOccurred())
+		DeferCleanup(mirrorRegistry.Delete, NodeTimeout(time.Minute))
 
 		By("Setting up kubelet credential providers")
 		providerBinDir := GinkgoT().TempDir()
@@ -142,30 +143,28 @@ var _ = SynchronizedBeforeSuite(
 		)).To(Succeed())
 
 		By("Starting KinD cluster")
-		_, kubeconfig := cluster.NewKinDCluster(
+		kindCluster, kubeconfig, err := cluster.NewKinDCluster(
 			ctx,
-			[]kindcluster.ProviderOption{kindcluster.ProviderWithDocker()},
-			[]kindcluster.CreateOption{
-				kindcluster.CreateWithV1Alpha4Config(&v1alpha4.Cluster{
-					KubeadmConfigPatches: []string{
-						kubeadmInitPatchKubeletCredentialProviderExtraArgs,
-						kubeadmJoinPatchKubeletCredentialProviderExtraArgs,
-					},
-					Nodes: []v1alpha4.Node{{
-						Role: v1alpha4.ControlPlaneRole,
-						ExtraMounts: []v1alpha4.Mount{{
-							HostPath:      mirrorRegistry.CACertFile(),
-							ContainerPath: "/etc/containerd/mirror-registry-ca.pem",
-							Readonly:      true,
-						}, {
-							HostPath:      providerBinDir,
-							ContainerPath: "/etc/kubernetes/image-credential-provider/",
-							Readonly:      true,
-						}},
+			&v1alpha4.Cluster{
+				KubeadmConfigPatches: []string{
+					kubeadmInitPatchKubeletCredentialProviderExtraArgs,
+					kubeadmJoinPatchKubeletCredentialProviderExtraArgs,
+				},
+				Nodes: []v1alpha4.Node{{
+					Role: v1alpha4.ControlPlaneRole,
+					ExtraMounts: []v1alpha4.Mount{{
+						HostPath:      mirrorRegistry.CACertFile(),
+						ContainerPath: "/etc/containerd/mirror-registry-ca.pem",
+						Readonly:      true,
+					}, {
+						HostPath:      providerBinDir,
+						ContainerPath: "/etc/kubernetes/image-credential-provider/",
+						Readonly:      true,
 					}},
-					ContainerdConfigPatches: []string{
-						fmt.Sprintf(
-							`[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+				}},
+				ContainerdConfigPatches: []string{
+					fmt.Sprintf(
+						`[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
   endpoint = ["https://%[1]s"]
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors."k8s.gcr.io"]
   endpoint = ["https://%[1]s"]
@@ -174,12 +173,13 @@ var _ = SynchronizedBeforeSuite(
 [plugins."io.containerd.grpc.v1.cri".registry.configs."%[1]s".tls]
   ca_file   = "/etc/containerd/mirror-registry-ca.pem"
 `,
-							mirrorRegistry.Address(),
-						),
-					},
-				}),
+						mirrorRegistry.Address(),
+					),
+				},
 			},
 		)
+		Expect(err).ToNot(HaveOccurred())
+		DeferCleanup(kindCluster.Delete, NodeTimeout(time.Minute))
 
 		configBytes, _ := json.Marshal(e2eSetupConfig{
 			Registry: e2eRegistryConfig{
