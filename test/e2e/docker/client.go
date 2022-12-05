@@ -11,13 +11,11 @@ import (
 	"io"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	g "github.com/onsi/ginkgo/v2"
-	gm "github.com/onsi/gomega"
+	"go.uber.org/multierr"
 )
 
 var (
@@ -51,9 +49,11 @@ func RunContainerInBackground(
 	containerCfg *container.Config,
 	hostCfg *container.HostConfig,
 	pullUsername, pullPassword string,
-) types.ContainerJSON {
+) (types.ContainerJSON, error) {
 	dClient, err := ClientFromEnv()
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return types.ContainerJSON{}, fmt.Errorf("failed to create Docker client: %w", err)
+	}
 
 	if hostCfg.NetworkMode.IsUserDefined() {
 		_, err = dClient.NetworkInspect(
@@ -74,29 +74,46 @@ func RunContainerInBackground(
 				},
 			)
 		}
-		gm.Expect(err).NotTo(gm.HaveOccurred())
+		if err != nil {
+			return types.ContainerJSON{}, fmt.Errorf("failed to create Docker network: %w", err)
+		}
 	}
 
 	out, err := dClient.ImagePull(ctx, containerCfg.Image, types.ImagePullOptions{})
-	gm.Expect(err).NotTo(gm.HaveOccurred())
-	defer out.Close()
-	_, _ = io.Copy(os.Stderr, out)
+	defer func() { _ = out.Close() }()
+	if err != nil {
+		_, _ = io.Copy(os.Stderr, out)
+		return types.ContainerJSON{}, fmt.Errorf("failed to pull Docker image: %w", err)
+	}
+	_, _ = io.Copy(io.Discard, out)
 
 	created, err := dClient.ContainerCreate(ctx, containerCfg, hostCfg, nil, nil, containerName)
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		return types.ContainerJSON{}, fmt.Errorf("failed to create container: %w", err)
+	}
 	containerID := created.ID
 
-	g.DeferCleanup(func(ctx g.SpecContext, containerID string) {
-		gm.Expect(ForceDeleteContainer(ctx, containerID)).To(gm.Succeed())
-	}, containerID, g.NodeTimeout(time.Minute))
-
-	gm.Expect(dClient.ContainerStart(ctx, containerID, types.ContainerStartOptions{})).
-		To(gm.Succeed())
+	if err := dClient.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
+		//nolint:contextcheck // Best effort background deletion.
+		if deleteErr := ForceDeleteContainer(context.Background(), containerID); deleteErr != nil {
+			err = multierr.Combine(err, deleteErr)
+		}
+		return types.ContainerJSON{}, fmt.Errorf("failed to start Docker container: %w", err)
+	}
 
 	containerInspect, err := dClient.ContainerInspect(ctx, containerID)
-	gm.Expect(err).NotTo(gm.HaveOccurred())
+	if err != nil {
+		//nolint:contextcheck // Best effort background deletion.
+		if deleteErr := ForceDeleteContainer(context.Background(), containerID); deleteErr != nil {
+			err = multierr.Combine(err, deleteErr)
+		}
+		return types.ContainerJSON{}, fmt.Errorf(
+			"failed to inspect started Docker container: %w",
+			err,
+		)
+	}
 
-	return containerInspect
+	return containerInspect, nil
 }
 
 func ForceDeleteContainer(ctx context.Context, containerID string) error {
@@ -134,15 +151,16 @@ func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
 		srcImage,
 		types.ImagePullOptions{RegistryAuth: authString(pullUsername, pullPassword)},
 	)
+	defer func() { _ = out.Close() }()
 	if err != nil {
+		_, _ = io.Copy(os.Stderr, out)
 		return fmt.Errorf(
 			"failed to pull image %q: %w",
 			srcImage,
 			err,
 		)
 	}
-	defer out.Close()
-	_, _ = io.Copy(os.Stderr, out)
+	_, _ = io.Copy(io.Discard, out)
 
 	if err := dClient.ImageTag(ctx, srcImage, destImage); err != nil {
 		return fmt.Errorf("failed to retag image: %w", err)
@@ -154,11 +172,12 @@ func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
 		destImage,
 		types.ImagePushOptions{RegistryAuth: authString(pushUsername, pushPassword)},
 	)
+	defer func() { _ = out.Close() }()
 	if err != nil {
+		_, _ = io.Copy(os.Stderr, out)
 		return fmt.Errorf("failed to push retagged image: %w", err)
 	}
-	defer out.Close()
-	_, _ = io.Copy(os.Stderr, out)
+	_, _ = io.Copy(io.Discard, out)
 
 	return nil
 }
