@@ -28,7 +28,7 @@ repos:
   - id: check-yaml
     args: ["-m", "--unsafe"]
     stages: [commit]
-    exclude: ^charts/
+    exclude: ^charts/.+/templates/
   - id: mixed-line-ending
     args: ["-f", "lf"]
     exclude: \.bat$
@@ -92,8 +92,7 @@ repos:
     args:
       - --license-filepath
       - header.txt
-      - --skip
-      - charts/templates/
+    exclude: ^charts/.+/templates/
   - id: insert-license
     name: License headers - Markdown
     stages: [commit]
