@@ -41,9 +41,6 @@ FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:df73bc639be43c3c4f9f
 
 FROM --platform=linux/${TARGETARCH} linux-${TARGETARCH}
 
-# Run as nonroot user using numeric ID for compatibllity.
-USER 65532
-
 COPY --from=credential_provider_builder \
      /go/bin/ecr-credential-provider \
      /go/bin/acr-credential-provider \

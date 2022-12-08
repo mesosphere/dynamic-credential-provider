@@ -1,0 +1,62 @@
+# Copyright 2022 D2iQ, Inc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+installer:
+  kubeletImageCredentialProviderBinDir: /etc/kubernetes/image-credential-provider/
+
+configSync:
+  secrets:
+    dynamicCredentialProviderConfig: dynamiccredentialproviderconfig
+    staticCredentialProvider: staticcredentialproviderauth
+
+image:
+  repository: mesosphere/dynamic-credential-provider
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 0
+
+securityContext:
+  privileged: true
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule

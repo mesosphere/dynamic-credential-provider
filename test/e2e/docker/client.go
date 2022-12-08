@@ -4,6 +4,8 @@
 package docker
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -146,35 +148,57 @@ func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
 		return err
 	}
 
-	out, err := dClient.ImagePull(
+	_, _, err = dClient.ImageInspectWithRaw(
 		ctx,
 		srcImage,
-		types.ImagePullOptions{RegistryAuth: authString(pullUsername, pullPassword)},
 	)
-	defer func() { _ = out.Close() }()
 	if err != nil {
-		_, _ = io.Copy(os.Stderr, out)
-		return fmt.Errorf(
-			"failed to pull image %q: %w",
+		if !client.IsErrNotFound(err) {
+			return fmt.Errorf("failed to check if image is already present locally: %w", err)
+		}
+
+		out, err := dClient.ImagePull(
+			ctx,
 			srcImage,
-			err,
+			types.ImagePullOptions{RegistryAuth: authString(pullUsername, pullPassword)},
 		)
+		defer func() {
+			if out != nil {
+				_ = out.Close()
+			}
+		}()
+		if err != nil {
+			if out != nil {
+				_, _ = io.Copy(os.Stderr, out)
+			}
+			return fmt.Errorf(
+				"failed to pull image %q: %w",
+				srcImage,
+				err,
+			)
+		}
+		_, _ = io.Copy(io.Discard, out)
 	}
-	_, _ = io.Copy(io.Discard, out)
 
 	if err := dClient.ImageTag(ctx, srcImage, destImage); err != nil {
 		return fmt.Errorf("failed to retag image: %w", err)
 	}
 	defer func() { _, _ = dClient.ImageRemove(ctx, destImage, types.ImageRemoveOptions{}) }()
 
-	out, err = dClient.ImagePush(
+	out, err := dClient.ImagePush(
 		ctx,
 		destImage,
 		types.ImagePushOptions{RegistryAuth: authString(pushUsername, pushPassword)},
 	)
-	defer func() { _ = out.Close() }()
+	defer func() {
+		if out != nil {
+			_ = out.Close()
+		}
+	}()
 	if err != nil {
-		_, _ = io.Copy(os.Stderr, out)
+		if out != nil {
+			_, _ = io.Copy(os.Stderr, out)
+		}
 		return fmt.Errorf("failed to push retagged image: %w", err)
 	}
 	_, _ = io.Copy(io.Discard, out)
@@ -190,4 +214,34 @@ func authString(username, password string) string {
 	encodedJSON, _ := json.Marshal(authConfig)
 
 	return base64.URLEncoding.EncodeToString(encodedJSON)
+}
+
+func ReadFileFromContainer(ctx context.Context, containerID, fPath string) (string, error) {
+	dClient, err := ClientFromEnv()
+	if err != nil {
+		return "", err
+	}
+
+	r, _, err := dClient.CopyFromContainer(ctx, containerID, fPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to copy file from container: %w", err)
+	}
+	defer r.Close()
+	tr := tar.NewReader(r)
+
+	_, err = tr.Next()
+	if err == io.EOF {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to copy file from container: %w", err)
+	}
+
+	var b bytes.Buffer
+	_, err = io.Copy(&b, tr) //nolint:gosec // Do not worry about DoS in e2e test.
+	if err != nil {
+		return "", fmt.Errorf("failed to copy file from container: %w", err)
+	}
+
+	return b.String(), nil
 }

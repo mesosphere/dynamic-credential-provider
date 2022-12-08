@@ -34,7 +34,7 @@ type kindCluster struct {
 func NewKinDCluster(
 	ctx context.Context,
 	cfg *kindv1alpha4.Cluster,
-) (kc Cluster, kubeconfig string, err error) {
+) (kc Cluster, name, kubeconfig string, err error) {
 	seedrng.EnsureSeeded()
 
 	if cfg.Name == "" {
@@ -44,7 +44,7 @@ func NewKinDCluster(
 	// Do not export kubeconfig to file by default, makes cleanup easier.
 	tempDir, err := os.MkdirTemp("", fmt.Sprintf("%s-kindcluster-*", cfg.Name))
 	if err != nil {
-		return nil, "", fmt.Errorf(
+		return nil, "", "", fmt.Errorf(
 			"failed to create temporary directory for KinD cluster configuration: %w",
 			err,
 		)
@@ -55,10 +55,16 @@ func NewKinDCluster(
 	cfgFile := filepath.Join(tempDir, "cluster.yaml")
 	cfgBytes, err := yaml.Marshal(cfg)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to marshal KinD cluster configuration to YAML: %w", err)
+		return nil, "", "", fmt.Errorf(
+			"failed to marshal KinD cluster configuration to YAML: %w",
+			err,
+		)
 	}
 	if err := os.WriteFile(cfgFile, cfgBytes, 0o400); err != nil { //nolint:revive // 0400 is standard read-only perms.
-		return nil, "", fmt.Errorf("failed to write KinD cluster configuration to file: %w", err)
+		return nil, "", "", fmt.Errorf(
+			"failed to write KinD cluster configuration to file: %w",
+			err,
+		)
 	}
 
 	tempKubeconfig := filepath.Join(tempDir, "kubeconfig")
@@ -74,12 +80,12 @@ func NewKinDCluster(
 
 	err = cmd.Run()
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to create KinD cluster: %w", err)
+		return nil, "", "", fmt.Errorf("failed to create KinD cluster: %w", err)
 	}
 
 	kubeconfigBytes, err := os.ReadFile(tempKubeconfig)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to get KinD cluster kubeconfig: %w", err)
+		return nil, "", "", fmt.Errorf("failed to get KinD cluster kubeconfig: %w", err)
 	}
 	kubeconfig = string(kubeconfigBytes)
 
@@ -93,10 +99,10 @@ func NewKinDCluster(
 		); deleteErr != nil {
 			err = multierr.Combine(err, deleteErr)
 		}
-		return nil, "", err
+		return nil, "", "", err
 	}
 
-	return kc, kubeconfig, nil
+	return kc, cfg.Name, kubeconfig, nil
 }
 
 func (c *kindCluster) Delete(ctx context.Context) error {
