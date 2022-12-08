@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   auto-approve:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
       - name: Dependabot metadata
@@ -34,7 +34,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
   enable-automerge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]'}}
     steps:
       - name: Dependabot metadata
