@@ -10,7 +10,7 @@ on:
 
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: google-github-actions/release-please-action@v3.6
         id: release-please
