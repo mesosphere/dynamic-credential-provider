@@ -7,11 +7,11 @@ go 1.19
 
 require (
 	k8s.io/cloud-provider-aws v1.25.1
-	sigs.k8s.io/cloud-provider-azure v1.25.4
+	sigs.k8s.io/cloud-provider-azure v1.25.5
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go v67.0.0+incompatible // indirect
+	github.com/Azure/azure-sdk-for-go v67.1.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.28 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.21 // indirect
@@ -33,12 +33,12 @@ require (
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
-	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/api v0.25.3 // indirect
-	k8s.io/apimachinery v0.25.3 // indirect
+	k8s.io/api v0.25.4 // indirect
+	k8s.io/apimachinery v0.25.4 // indirect
 	k8s.io/component-base v0.25.3 // indirect
 	k8s.io/klog/v2 v2.80.0 // indirect
 	k8s.io/kubelet v0.25.3 // indirect
