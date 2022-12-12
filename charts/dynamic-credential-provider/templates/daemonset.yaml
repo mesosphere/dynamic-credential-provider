@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ include "dynamic-credential-provider.fullname" . }}
+  labels:
+    {{- include "dynamic-credential-provider.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "dynamic-credential-provider.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "dynamic-credential-provider.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "dynamic-credential-provider.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: installer
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - install
+          env:
+            - name: CREDENTIAL_PROVIDER_TARGET_DIR
+              value: {{ clean ( printf "/host/%s" .Values.installer.kubeletImageCredentialProviderBinDir ) }}
+          volumeMounts:
+            - name: credentialproviderbindir
+              mountPath: {{ clean ( printf "/host/%s" .Values.installer.kubeletImageCredentialProviderBinDir ) }}
+      containers:
+        - name: config-watcher
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - sync-config
+            - --config-file
+            - /etc/dynamic-provider-config/dynamic-credential-provider-config.yaml={{ clean ( printf "/host/%s" .Values.installer.kubeletImageCredentialProviderBinDir ) }}/dynamic-credential-provider-config.yaml
+            - --config-file
+            - /etc/static-provider-auth/static-image-credentials.json={{ clean ( printf "/host/%s" .Values.installer.kubeletImageCredentialProviderBinDir ) }}/static-image-credentials.json
+          volumeMounts:
+            - name: credentialproviderbindir
+              mountPath: {{ clean ( printf "/host/%s" .Values.installer.kubeletImageCredentialProviderBinDir ) }}
+            {{- with .Values.configSync.secrets.dynamicCredentialProviderConfig }}
+            - name: dynamicproviderconfig
+              mountPath: /etc/dynamic-provider-config/
+            {{- end }}
+            {{- with .Values.configSync.secrets.staticCredentialProvider }}
+            - name: staticprovider
+              mountPath: /etc/static-provider-auth/
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: credentialproviderbindir
+          hostPath:
+            path: {{ .Values.installer.kubeletImageCredentialProviderBinDir }}
+        {{- with .Values.configSync.secrets.dynamicCredentialProviderConfig }}
+        - name: dynamicproviderconfig
+          secret:
+            secretName: {{ . }}
+            defaultMode: 0400
+            items:
+              - key: dynamic-credential-provider-config.yaml
+                path: dynamic-credential-provider-config.yaml
+        {{- end }}
+        {{- with .Values.configSync.secrets.staticCredentialProvider }}
+        - name: staticprovider
+          secret:
+            secretName: {{ . }}
+            defaultMode: 0400
+            items:
+              - key: static-image-credentials.json
+                path: static-image-credentials.json
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

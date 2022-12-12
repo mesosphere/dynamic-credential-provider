@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strings"
 )
 
 // Artifact is a goreleaser type defines a single artifact.
@@ -29,6 +30,18 @@ func (as Artifacts) SelectBinary(name, goos, goarch string) (Artifact, bool) {
 	for i := range as {
 		a := as[i]
 		if a.Type == "Binary" && a.Name == name && a.Goos == goos && a.Goarch == goarch {
+			return a, true
+		}
+	}
+
+	return Artifact{}, false
+}
+
+func (as Artifacts) SelectDockerImage(namePrefix, goos, goarch string) (Artifact, bool) {
+	for i := range as {
+		a := as[i]
+		if a.Type == "Docker Image" && strings.HasPrefix(a.Name, namePrefix) && a.Goos == goos &&
+			a.Goarch == goarch {
 			return a, true
 		}
 	}

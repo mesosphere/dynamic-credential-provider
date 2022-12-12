@@ -6,6 +6,7 @@
 package mirror_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -18,9 +19,15 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/otiai10/copy"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/cli-utils/pkg/kstatus/status"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
 	"github.com/mesosphere/dynamic-credential-provider/test/e2e/cluster"
@@ -48,9 +55,12 @@ type e2eRegistryConfig struct {
 }
 
 var (
+	kindClusterName       string
 	kindClusterRESTConfig *rest.Config
 	kindClusterClient     kubernetes.Interface
 	e2eConfig             e2eSetupConfig
+	artifacts             goreleaser.Artifacts
+	configTemplates       = template.Must(template.ParseGlob(testdataPath("*.tmpl")))
 )
 
 //nolint:gosec // No credentials here.
@@ -68,6 +78,18 @@ nodeRegistration:
     image-credential-provider-bin-dir: /etc/kubernetes/image-credential-provider/`
 )
 
+type staticImageCredentialsData struct {
+	MirrorAddress, MirrorUsername, MirrorPassword, DockerHubPassword, DockerHubUsername string
+}
+
+type dynamicCredentialProviderConfigData struct {
+	MirrorAddress string
+}
+
+type imageCredentialProviderConfigData struct {
+	MirrorAddress string
+}
+
 func testdataPath(f string) string {
 	return filepath.Join("testdata", f)
 }
@@ -75,7 +97,8 @@ func testdataPath(f string) string {
 var _ = SynchronizedBeforeSuite(
 	func(ctx SpecContext) []byte {
 		By("Parse goreleaser artifacts")
-		artifacts, err := goreleaser.ParseArtifactsFile(filepath.Join("..",
+		var err error
+		artifacts, err = goreleaser.ParseArtifactsFile(filepath.Join("..",
 			"..",
 			"..",
 			"..",
@@ -91,35 +114,32 @@ var _ = SynchronizedBeforeSuite(
 
 		By("Setting up kubelet credential providers")
 		providerBinDir := GinkgoT().TempDir()
-		configTmpl := template.Must(template.ParseGlob(testdataPath("*.tmpl")))
 		templatedFile, err := os.Create(
 			filepath.Join(providerBinDir, "image-credential-provider-config.yaml"),
 		)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(configTmpl.ExecuteTemplate(
+		Expect(configTemplates.ExecuteTemplate(
 			templatedFile,
 			"image-credential-provider-config.yaml.tmpl",
-			struct{ MirrorAddress string }{MirrorAddress: mirrorRegistry.Address()},
+			imageCredentialProviderConfigData{MirrorAddress: mirrorRegistry.Address()},
 		)).To(Succeed())
 		templatedFile, err = os.Create(
 			filepath.Join(providerBinDir, "dynamic-credential-provider-config.yaml"),
 		)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(configTmpl.ExecuteTemplate(
+		Expect(configTemplates.ExecuteTemplate(
 			templatedFile,
 			"dynamic-credential-provider-config.yaml.tmpl",
-			struct{ MirrorAddress string }{MirrorAddress: mirrorRegistry.Address()},
+			dynamicCredentialProviderConfigData{MirrorAddress: mirrorRegistry.Address()},
 		)).To(Succeed())
 		templatedFile, err = os.Create(
 			filepath.Join(providerBinDir, "static-image-credentials.json"),
 		)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(configTmpl.ExecuteTemplate(
+		Expect(configTemplates.ExecuteTemplate(
 			templatedFile,
 			"static-image-credentials.json.tmpl",
-			struct {
-				MirrorAddress, MirrorUsername, MirrorPassword, DockerHubPassword, DockerHubUsername string
-			}{
+			staticImageCredentialsData{
 				MirrorAddress:     mirrorRegistry.Address(),
 				MirrorUsername:    mirrorRegistry.Username(),
 				MirrorPassword:    mirrorRegistry.Password(),
@@ -143,7 +163,7 @@ var _ = SynchronizedBeforeSuite(
 		)).To(Succeed())
 
 		By("Starting KinD cluster")
-		kindCluster, kubeconfig, err := cluster.NewKinDCluster(
+		kindCluster, kcName, kubeconfig, err := cluster.NewKinDCluster(
 			ctx,
 			&v1alpha4.Cluster{
 				KubeadmConfigPatches: []string{
@@ -159,7 +179,6 @@ var _ = SynchronizedBeforeSuite(
 					}, {
 						HostPath:      providerBinDir,
 						ContainerPath: "/etc/kubernetes/image-credential-provider/",
-						Readonly:      true,
 					}},
 				}},
 				ContainerdConfigPatches: []string{
@@ -180,6 +199,7 @@ var _ = SynchronizedBeforeSuite(
 		)
 		Expect(err).ToNot(HaveOccurred())
 		DeferCleanup(kindCluster.Delete, NodeTimeout(time.Minute))
+		kindClusterName = kcName
 
 		configBytes, _ := json.Marshal(e2eSetupConfig{
 			Registry: e2eRegistryConfig{
@@ -207,3 +227,46 @@ var _ = SynchronizedBeforeSuite(
 	},
 	NodeTimeout(time.Minute*2), GracePeriod(time.Minute*2),
 )
+
+func runPod(ctx context.Context, k8sClient kubernetes.Interface, image string) *corev1.Pod {
+	pod, err := k8sClient.CoreV1().Pods(metav1.NamespaceDefault).
+		Create(
+			ctx,
+			&corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{GenerateName: "pod-"},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name:            "container1",
+						Image:           image,
+						ImagePullPolicy: corev1.PullAlways,
+					}},
+				},
+			},
+			metav1.CreateOptions{},
+		)
+	Expect(err).NotTo(HaveOccurred())
+
+	DeferCleanup(func(ctx SpecContext) {
+		err := kindClusterClient.CoreV1().Pods(metav1.NamespaceDefault).
+			Delete(ctx, pod.GetName(), *metav1.NewDeleteOptions(0))
+		Expect(err).NotTo(HaveOccurred())
+	}, NodeTimeout(time.Minute))
+
+	return pod
+}
+
+func objStatus(obj k8sruntime.Object, scheme *k8sruntime.Scheme) status.Status {
+	if obj.GetObjectKind().GroupVersionKind().Group == "" {
+		gvk, err := apiutil.GVKForObject(obj, scheme)
+		Expect(err).NotTo(HaveOccurred())
+		obj.GetObjectKind().SetGroupVersionKind(gvk)
+	}
+
+	m, err := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	Expect(err).NotTo(HaveOccurred())
+
+	res, err := status.Compute(&unstructured.Unstructured{Object: m})
+	Expect(err).NotTo(HaveOccurred())
+
+	return res.Status
+}
