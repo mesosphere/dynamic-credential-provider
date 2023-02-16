@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/docker/distribution/reference"
@@ -41,23 +42,30 @@ var _ = Describe("Successful",
 		BeforeAll(func(ctx SpecContext) {
 			By("Pushing project Docker image to registry")
 			img, ok := artifacts.SelectDockerImage(
-				"mesosphere/dynamic-credential-provider",
+				"ghcr.io/mesosphere/dynamic-credential-provider",
 				"linux",
 				runtime.GOARCH,
 			)
 			Expect(ok).To(BeTrue())
-			err := docker.RetagAndPushImage(
+
+			namedImg, err := reference.ParseNormalizedNamed(img.Name)
+			Expect(err).ToNot(HaveOccurred())
+			pushedImageName := strings.Replace(
+				img.Name,
+				reference.Domain(namedImg),
+				e2eConfig.Registry.HostPortAddress,
+				1,
+			)
+
+			err = docker.RetagAndPushImage(
 				ctx,
 				img.Name,
-				fmt.Sprintf("%s/%s", e2eConfig.Registry.HostPortAddress, img.Name),
+				pushedImageName,
 				env.DockerHubUsername(),
 				env.DockerHubPassword(),
 				e2eConfig.Registry.Username,
 				e2eConfig.Registry.Password,
 			)
-			Expect(err).NotTo(HaveOccurred())
-
-			namedImg, err := reference.ParseNormalizedNamed(img.Name)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Creating credential provider config secrets with no mirror specified")

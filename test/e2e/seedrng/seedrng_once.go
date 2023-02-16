@@ -34,5 +34,6 @@ func EnsureSeeded() {
 }
 
 func Reseed() {
+	//nolint:staticcheck // rand.Seed is deprecated but only if a particular sequence is required.
 	rand.Seed(time.Now().UnixNano())
 }

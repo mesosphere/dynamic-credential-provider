@@ -6,22 +6,18 @@ repos:
   hooks:
   - id: golangci-lint
     name: golangci-lint
-    entry: make lint
+    entry: make go-generate lint
     language: system
-    files: "(.*\\.go|go.mod|go.sum)$"
+    files: "(.*\\.go|go.mod|go.sum|go.mk)$"
     pass_filenames: false
-  - id: go-generate
-    name: go-generate
-    entry: make go-generate
-    language: system
-    files: "(.*\\.go|go.mod|go.sum)$"
-    pass_filenames: false
+    stages: [commit]
 - repo: https://github.com/tekwizely/pre-commit-golang
   rev: v1.0.0-rc.1
   hooks:
   - id: go-mod-tidy-repo
+    stages: [commit]
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.3.0
+  rev: v4.4.0
   hooks:
   - id: trailing-whitespace
     stages: [commit]
@@ -48,7 +44,7 @@ repos:
   - id: end-of-file-fixer
     stages: [commit]
 - repo: https://github.com/jorisroovers/gitlint
-  rev: v0.17.0
+  rev: v0.19.0dev
   hooks:
   - id: gitlint
     stages: [commit-msg]
@@ -61,19 +57,19 @@ repos:
   - id: script-must-have-extension
     stages: [commit]
 - repo: https://github.com/shellcheck-py/shellcheck-py
-  rev: v0.8.0.4
+  rev: v0.9.0.2
   hooks:
   - id: shellcheck
     stages: [commit]
-    args: ["-e", "SC2211"]
+    args: ["-x"]
 - repo: https://github.com/igorshubovych/markdownlint-cli
-  rev: v0.32.2
+  rev: v0.33.0
   hooks:
   - id: markdownlint
     stages: [commit]
-    exclude: ^CHANGELOG.md$
+    exclude: ^(CHANGELOG.md|charts/.+/README.md)$
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.3.1
+  rev: v1.4.2
   hooks:
   - id: insert-license
     name: License headers - Go
@@ -92,7 +88,7 @@ repos:
     args:
       - --license-filepath
       - header.txt
-    exclude: ^charts/.+/templates/
+    exclude: ^charts/.+/(templates/.+\.yaml|crds/.+\.yaml)$
   - id: insert-license
     name: License headers - Markdown
     stages: [commit]
@@ -103,3 +99,11 @@ repos:
       - header.txt
       - --comment-style
       - <!--|| -->
+- repo: https://github.com/norwoodj/helm-docs
+  rev: v1.11.0
+  hooks:
+  - id: helm-docs
+    stages: [commit]
+    args:
+      # Make the tool search for charts only under the `example-charts` directory
+      - --chart-search-root=charts

@@ -70,7 +70,7 @@ func TestGetCredentials(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			credentialsFile := path.Join(t.TempDir(), "image-credentials.json")
-			//nolint:revive // Dummy value in test file, no need for const.
+
 			err := os.WriteFile(credentialsFile, []byte(tt.credentialsString), 0o600)
 			require.NoError(t, err, "error writing temporary credentials file")
 
