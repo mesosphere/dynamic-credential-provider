@@ -8,6 +8,7 @@ package mirror_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -18,11 +19,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/sethvargo/go-password/password"
-	"go.uber.org/multierr"
 	"helm.sh/helm/v3/pkg/cli/output"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	applymetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
@@ -143,7 +143,7 @@ var _ = Describe("Successful",
 			)
 			var releaseYAML bytes.Buffer
 			if encodeErr := output.EncodeYAML(&releaseYAML, release); encodeErr != nil {
-				err = multierr.Combine(err, encodeErr)
+				err = errors.Join(err, encodeErr)
 			} else {
 				AddReportEntry("helm release", ReportEntryVisibilityFailureOrVerbose, releaseYAML.String())
 			}
@@ -175,7 +175,7 @@ var _ = Describe("Successful",
 				ds, err = kindClusterClient.AppsV1().DaemonSets(metav1.NamespaceSystem).
 					Get(ctx, "dynamic-credential-provider", metav1.GetOptions{})
 				if err != nil {
-					if errors.IsNotFound(err) {
+					if k8serrors.IsNotFound(err) {
 						return status.NotFoundStatus
 					}
 

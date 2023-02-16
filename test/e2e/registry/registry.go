@@ -5,6 +5,7 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"path/filepath"
@@ -16,7 +17,6 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/foomo/htpasswd"
 	"github.com/sethvargo/go-password/password"
-	"go.uber.org/multierr"
 
 	"github.com/mesosphere/dynamic-credential-provider/test/e2e/docker"
 	"github.com/mesosphere/dynamic-credential-provider/test/e2e/env"
@@ -146,7 +146,7 @@ func NewRegistry(
 	publishedPort, ok := containerInspect.NetworkSettings.Ports[nat.Port("5000/tcp")]
 	if !ok {
 		if deleteErr := docker.ForceDeleteContainer(ctx, containerInspect.ID); deleteErr != nil {
-			err = multierr.Combine(err, deleteErr)
+			err = errors.Join(err, deleteErr)
 		}
 		return nil, fmt.Errorf("failed to get localhost registry port: %w", err)
 	}
