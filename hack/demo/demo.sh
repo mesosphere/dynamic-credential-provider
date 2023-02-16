@@ -73,8 +73,8 @@ containerdConfigPatches:
     endpoint = ["https://mirror.gcr.io"]
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-1.docker.io".auth]
-    username = "${DOCKER_HUB_USERNAME:-}"
-    password = "${DOCKER_HUB_PASSWORD:-}"
+    username = "${DOCKER_HUB_USERNAME-}"
+    password = "${DOCKER_HUB_PASSWORD-}"
 nodes:
 - role: control-plane
   extraMounts:
@@ -180,8 +180,8 @@ spec:
             password: "${REGISTRY_PASSWORD}"
         - registryHost: "docker.io"
           staticCredentials:
-            username: "${DOCKER_HUB_USERNAME:-}"
-            password: "${DOCKER_HUB_PASSWORD:-}"
+            username: "${DOCKER_HUB_USERNAME-}"
+            password: "${DOCKER_HUB_PASSWORD-}"
     - name: registryCredentialStrategy
       value: MirrorCredentialsFirst
     - name: kindNodeImageRepository

@@ -10,7 +10,7 @@ configSync:
     staticCredentialProvider: staticcredentialproviderauth
 
 image:
-  repository: mesosphere/dynamic-credential-provider
+  repository: ghcr.io/mesosphere/dynamic-credential-provider
   pullPolicy: IfNotPresent
   tag: ""
 

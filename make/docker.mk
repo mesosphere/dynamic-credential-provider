@@ -1,14 +1,6 @@
 # Copyright 2022 D2iQ, Inc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-.PHONY: dockerauth
-dockerauth:
-ifdef DOCKER_USERNAME
-ifdef DOCKER_PASSWORD
-	echo -n $(DOCKER_PASSWORD) | docker login -u $(DOCKER_USERNAME) --password-stdin
-endif
-endif
-
 .PHONY: update-distroless-base-image
 update-distroless-base-image: install-tool.gcloud install-tool.gojq install-tool.go.crane; $(info $(M) updating distroless base image)
 	LATEST_DISTROLESS_NONROOT_DIGEST="$$(gcloud container images list-tags gcr.io/distroless/static --format=json | gojq -r '.[] | select(.tags | index("nonroot")) | .digest')"; \
