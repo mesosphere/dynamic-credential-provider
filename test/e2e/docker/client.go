@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -17,7 +18,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"go.uber.org/multierr"
 )
 
 var (
@@ -98,7 +98,7 @@ func RunContainerInBackground(
 	if err := dClient.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
 		//nolint:contextcheck // Best effort background deletion.
 		if deleteErr := ForceDeleteContainer(context.Background(), containerID); deleteErr != nil {
-			err = multierr.Combine(err, deleteErr)
+			err = errors.Join(err, deleteErr)
 		}
 		return types.ContainerJSON{}, fmt.Errorf("failed to start Docker container: %w", err)
 	}
@@ -107,7 +107,7 @@ func RunContainerInBackground(
 	if err != nil {
 		//nolint:contextcheck // Best effort background deletion.
 		if deleteErr := ForceDeleteContainer(context.Background(), containerID); deleteErr != nil {
-			err = multierr.Combine(err, deleteErr)
+			err = errors.Join(err, deleteErr)
 		}
 		return types.ContainerJSON{}, fmt.Errorf(
 			"failed to inspect started Docker container: %w",

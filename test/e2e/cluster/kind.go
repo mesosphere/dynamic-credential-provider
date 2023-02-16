@@ -5,6 +5,7 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,9 +14,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-	"go.uber.org/multierr"
 	yaml "gopkg.in/yaml.v3"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -97,7 +97,7 @@ func NewKinDCluster(
 		if deleteErr := kc.Delete( //nolint:contextcheck // Best effort background deletion.
 			context.Background(),
 		); deleteErr != nil {
-			err = multierr.Combine(err, deleteErr)
+			err = errors.Join(err, deleteErr)
 		}
 		return nil, "", "", err
 	}
@@ -150,7 +150,7 @@ func waitForDefaultServiceAccountToExist(ctx context.Context, kubeconfig string)
 			if getSAErr == nil {
 				return true, nil
 			}
-			if errors.IsNotFound(getSAErr) {
+			if k8serrors.IsNotFound(getSAErr) {
 				return false, nil
 			}
 			return false, getSAErr

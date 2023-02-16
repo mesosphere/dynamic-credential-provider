@@ -5,11 +5,11 @@ package filewatcher
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
-	"go.uber.org/multierr"
 	"k8s.io/klog/v2"
 )
 
@@ -54,7 +54,7 @@ func (cw *FileWatcher) Start(ctx context.Context) error {
 
 	if err := cw.handleEvent(fsnotify.Event{Name: cw.watchedFilepath, Op: fsnotify.Write}); err != nil {
 		if closeWatcherErr := cw.watcher.Close(); closeWatcherErr != nil {
-			err = multierr.Combine(err, closeWatcherErr)
+			err = errors.Join(err, closeWatcherErr)
 		}
 		return err
 	}
