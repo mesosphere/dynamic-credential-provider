@@ -2,6 +2,14 @@
 
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
 
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.1.1...v0.1.2
+
+## Changelog
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
 ## What's Changed
 ### Other Changes
 * build(deps): Bump github.com/onsi/ginkgo/v2 from 2.8.1 to 2.8.3 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/71
