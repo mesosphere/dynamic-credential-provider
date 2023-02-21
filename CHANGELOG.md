@@ -3,6 +3,20 @@
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
 
 ## What's Changed
+### Other Changes
+* build(deps): Bump github.com/onsi/ginkgo/v2 from 2.8.1 to 2.8.3 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/71
+* build(deps): Bump go.etcd.io/etcd/client/pkg/v3 from 3.5.6 to 3.5.7 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/75
+* build(deps): Bump github.com/onsi/gomega from 1.26.0 to 1.27.1 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/73
+* build(deps): Bump helm.sh/helm/v3 from 3.10.2 to 3.11.1 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/74
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.1.0...v0.1.1
+
+## Changelog
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
 ### Exciting New Features 🎉
 * feat: static credentials provider by @dkoshkin in https://github.com/mesosphere/dynamic-credential-provider/pull/3
 * feat: Add config type boilerplate by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/6
