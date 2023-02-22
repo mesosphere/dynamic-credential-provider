@@ -36,8 +36,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         ./cmd/auth-provider-gcp
 
 # Use distroless/static:nonroot image for a base.
-FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:31b8a624208dea1baac3047a18fa24304d129f9ae60b5889fc6ea1d0e8b658b6 as linux-amd64
-FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:df73bc639be43c3c4f9faaee290de8126d80d280f613654fdd9bfdac61793003 as linux-arm64
+FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:2176053eecd571134c44e669795e50102979ffe14304f90ed8173842e146671e as linux-amd64
+FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:80a11c246d44cb9730a904d20e84bee52e076da7c2bec838c234a63187e54aaa as linux-arm64
 
 FROM --platform=linux/${TARGETARCH} linux-${TARGETARCH}
 
