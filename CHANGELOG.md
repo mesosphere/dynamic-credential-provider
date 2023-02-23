@@ -2,6 +2,17 @@
 
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
 
+## What's Changed
+### Exciting New Features 🎉
+* feat: Create target dir if it does not exist by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/79
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.1.2...v0.2.0
+
+## Changelog
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
 
 
 **Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.1.1...v0.1.2
