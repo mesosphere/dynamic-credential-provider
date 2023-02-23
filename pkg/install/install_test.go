@@ -81,6 +81,31 @@ func TestSuccessfulCopy(t *testing.T) {
 	}
 }
 
+func TestSuccessfulCopyNonExistentTarget(t *testing.T) {
+	tmpDir := t.TempDir()
+	targetDir := filepath.Join(tmpDir, "nonexistent")
+
+	t.Setenv(install.CredentialProviderSourceDirEnvVar, "testdata")
+	t.Setenv(install.CredentialProviderTargetDirEnvVar, targetDir)
+
+	require.NoError(t, install.Install(logrus.New()))
+
+	testFiles, err := os.ReadDir("testdata")
+	require.NoError(t, err)
+
+	for _, f := range testFiles {
+		expectedFile := filepath.Join(targetDir, f.Name())
+		assert.FileExists(t, expectedFile)
+		srcFile := filepath.Join("testdata", f.Name())
+		srcFileStat, err := os.Stat(srcFile)
+		assert.NoError(t, err)
+		expectedFileStat, err := os.Stat(expectedFile)
+		assert.NoError(t, err)
+		assert.Equal(t, srcFileStat.Mode(), expectedFileStat.Mode())
+		assertFileHashesEqual(t, srcFile, expectedFile)
+	}
+}
+
 func TestSuccessfulCopySkipFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
