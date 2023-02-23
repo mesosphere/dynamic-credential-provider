@@ -77,9 +77,8 @@ func Install(logger logrus.FieldLogger) error {
 		return err
 	}
 
-	// Place the new binaries if the directory is writeable.
-	if err := fileutil.IsDirWriteable(c.CredentialProviderTargetDir); err != nil {
-		return fmt.Errorf("directory is not writeable: %w", err)
+	if err := ensureDirExists(c.CredentialProviderTargetDir); err != nil {
+		return fmt.Errorf("failed to ensure target directory exists and is writable: %w", err)
 	}
 
 	// Iterate through each binary we might want to install.
@@ -108,6 +107,21 @@ func Install(logger logrus.FieldLogger) error {
 	}
 
 	logger.Infof("Wrote credential provider binaries to %s\n", c.CredentialProviderTargetDir)
+
+	return nil
+}
+
+func ensureDirExists(dir string) error {
+	// Create the directory if it does not already exist.
+	//nolint:revive // 755 is easy to understand file permissions.
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("failed to create target directory: %w", err)
+	}
+
+	// Ensure the directory is writeable.
+	if err := fileutil.IsDirWriteable(dir); err != nil {
+		return fmt.Errorf("directory is not writeable: %w", err)
+	}
 
 	return nil
 }
