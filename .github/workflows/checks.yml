@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install asdf
-        uses: asdf-vm/actions/setup@v1
+        uses: asdf-vm/actions/setup@v2
 
       - name: Run unit tests
         run: make test
@@ -51,7 +51,7 @@ jobs:
 
       - name: Install asdf
         if: steps.check_e2e_files.outputs.files_exists == 'true'
-        uses: asdf-vm/actions/setup@v1
+        uses: asdf-vm/actions/setup@v2
 
       - name: Run e2e tests
         if: steps.check_e2e_files.outputs.files_exists == 'true'
@@ -82,7 +82,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install asdf
-        uses: asdf-vm/actions/setup@v1
+        uses: asdf-vm/actions/setup@v2
 
       - name: Check generated files
         run: make go-generate
@@ -118,7 +118,7 @@ jobs:
           shfmt-version: ${{ fromJson(steps.versions.outputs.tools).shfmt }}
 
       - name: Install asdf
-        uses: asdf-vm/actions/setup@v1
+        uses: asdf-vm/actions/setup@v2
 
       - name: Install helm-docs
         run: make install-tool.helm-docs
