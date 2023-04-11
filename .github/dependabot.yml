@@ -12,6 +12,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: github.com/docker/cli
+        update-types:
+          - version-update:semver-major
+      - dependency-name: github.com/docker/docker
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: "gomod"
     directory: "/credential-providers"
