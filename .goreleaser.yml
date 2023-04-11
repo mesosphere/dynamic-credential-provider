@@ -41,7 +41,7 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
     hooks:
       pre:
-        - cmd: make SKIP_UPX={{ .IsSnapshot }} go-generate
+        - cmd: make go-generate
           env:
             - GOOS={{ .Os }}
             - GOARCH={{ .Arch }}
@@ -66,7 +66,7 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
     hooks:
       pre:
-        - cmd: make SKIP_UPX={{ if index .Env "SKIP_UPX" }}{{ .Env.SKIP_UPX }}{{ else }}{{ .IsSnapshot }}{{ end }} go-generate
+        - cmd: make go-generate
           env:
             - GOOS={{ .Os }}
             - GOARCH={{ .Arch }}
