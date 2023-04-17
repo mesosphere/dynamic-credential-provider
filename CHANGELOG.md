@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.3.0 (2023-04-17)
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
+### Exciting New Features 🎉
+* feat: Use kubelet v1 APIs by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/118
+### Other Changes
+* build(deps): Bump k8s.io/klog/v2 from 2.80.1 to 2.90.0 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/81
+* build(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/80
+* build(deps): Bump k8s.io/api from 0.26.1 to 0.26.2 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/82
+* build(deps): Bump github.com/onsi/ginkgo/v2 from 2.8.3 to 2.9.0 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/84
+* build(deps): Bump k8s.io/kubelet from 0.26.1 to 0.26.2 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/85
+* build(deps): Bump sigs.k8s.io/controller-runtime from 0.14.4 to 0.14.5 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/89
+* build(deps): Bump k8s.io/klog/v2 from 2.90.0 to 2.90.1 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/86
+* build(deps): Bump github.com/onsi/gomega from 1.27.1 to 1.27.3 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/87
+* build(deps): Bump helm.sh/helm/v3 from 3.11.1 to 3.11.2 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/90
+* build(deps): Bump sigs.k8s.io/cloud-provider-azure from 1.26.5 to 1.26.6 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/91
+* build(deps): Bump k8s.io/cloud-provider-aws from 1.26.0 to 1.26.1 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/88
+* build(deps): Bump tj-actions/verify-changed-files from 13 to 14 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/93
+* build(deps): Bump k8s.io/kubelet from 0.26.2 to 0.26.3 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/96
+* build(deps): Bump github.com/onsi/ginkgo/v2 from 2.9.0 to 2.9.1 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/98
+* build(deps): Bump sigs.k8s.io/cloud-provider-azure from 1.26.6 to 1.26.7 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/99
+* build(deps): Bump github.com/onsi/gomega from 1.27.3 to 1.27.4 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/95
+* build(deps): Bump actions/setup-go from 3 to 4 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/94
+* build(deps): Bump asdf-vm/actions from 1 to 2 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/92
+* build(deps): Bump github.com/onsi/ginkgo/v2 from 2.9.1 to 2.9.2 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/101
+* build(deps): Bump github.com/onsi/gomega from 1.27.4 to 1.27.5 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/102
+* build(deps): Bump github.com/onsi/gomega from 1.27.5 to 1.27.6 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/103
+* build(deps): Bump sigs.k8s.io/kind from 0.17.0 to 0.18.0 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/104
+* build(deps): Bump sigs.k8s.io/controller-runtime from 0.14.5 to 0.14.6 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/106
+* build(deps): Bump github.com/spf13/cobra from 1.6.1 to 1.7.0 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/107
+* build(deps): Bump github.com/otiai10/copy from 1.9.0 to 1.10.0 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/109
+* build: Upgrade all tools by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/111
+* build(deps): pin github.com/docker/* to v20.10.24+incompatible by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/110
+* build(deps): Bump go.etcd.io/etcd/client/pkg/v3 from 3.5.7 to 3.5.8 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/114
+* build(deps): Bump k8s.io/apimachinery from 0.26.3 to 0.27.1 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/113
+* build(deps): Bump k8s.io/cloud-provider-aws from 1.26.1 to 1.27.0 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/112
+* build(deps): Bump helm.sh/helm/v3 from 3.11.2 to 3.11.3 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/115
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.2.0...v0.3.0
+
+## Changelog
+
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
 
 ## What's Changed
