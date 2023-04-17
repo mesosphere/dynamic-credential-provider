@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/klog/v2"
-	"k8s.io/kubelet/config/v1beta1"
+	kubeletconfigv1 "k8s.io/kubelet/config/v1"
 	credentialproviderapi "k8s.io/kubelet/pkg/apis/credentialprovider"
 
 	"github.com/mesosphere/dynamic-credential-provider/apis/config/v1alpha1"
@@ -30,7 +30,7 @@ import (
 // newPluginProvider returns a new pluginProvider based on the credential provider config.
 func newPluginProvider(
 	pluginBinDir string,
-	provider *v1beta1.CredentialProvider,
+	provider *kubeletconfigv1.CredentialProvider,
 ) (*pluginProvider, error) {
 	mediaType := "application/json"
 	info, ok := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), mediaType)
@@ -107,7 +107,7 @@ func (p *pluginProvider) Provide(
 	// foo.bar.registry
 	// foo.bar.registry/image1
 	// foo.bar.registry/image2
-	res, err, _ := p.group.Do(image, func() (interface{}, error) {
+	res, err, _ := p.group.Do(image, func() (any, error) {
 		return p.plugin.ExecPlugin(context.Background(), image)
 	})
 
@@ -151,7 +151,7 @@ type execPlugin struct {
 	apiVersion   string
 	encoder      runtime.Encoder
 	args         []string
-	envVars      []v1beta1.ExecEnvVar
+	envVars      []kubeletconfigv1.ExecEnvVar
 	pluginBinDir string
 	environ      func() []string
 }

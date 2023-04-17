@@ -4,7 +4,7 @@
 // This package provides utilities to work with URL globs for credential providers.
 //
 // Duplicating documentation from
-// https://github.com/kubernetes/kubelet/blob/v0.25.4/pkg/apis/credentialprovider/v1beta1/types.go#L73-L101
+// https://github.com/kubernetes/kubelet/blob/v0.26.4/pkg/apis/credentialprovider/v1/types.go#L73-L101
 // for visibility:
 //
 // auth is a map containing authentication information passed into the kubelet.

@@ -8,7 +8,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubelet/config/v1beta1"
+	kubeletconfigv1 "k8s.io/kubelet/config/v1"
 )
 
 //nolint:gochecknoinits // init is the convention for registering API types.
@@ -21,7 +21,7 @@ func init() {
 type DynamicCredentialProviderConfig struct {
 	//nolint:revive // inline is not an official json struct tag value, but is required by Kubernetes.
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitempty"` //nolint:tagliatelle // This is the upstream convention.
 
 	// Mirror is the optional mirror configuration.
 	// +optional
@@ -29,9 +29,9 @@ type DynamicCredentialProviderConfig struct {
 
 	// CredentialProviders holds the configuration for the kubelet credential providers. Embeds the
 	// `CredentialProviderConfig` kind from kubelet config API - see
-	// https://github.com/kubernetes/kubelet/blob/v0.25.4/config/v1beta1/types.go#L921 for info.
+	// https://github.com/kubernetes/kubelet/blob/v0.26.3/config/v1/types.go#L28 for info.
 	// +optional
-	CredentialProviders *v1beta1.CredentialProviderConfig `json:"credentialProviders,omitempty"`
+	CredentialProviders *kubeletconfigv1.CredentialProviderConfig `json:"credentialProviders,omitempty"`
 
 	// CredentialProviderPluginBinDir is the directory where credential provider plugin binaries are located.
 	CredentialProviderPluginBinDir string `json:"credentialProviderPluginBinDir,omitempty"`
@@ -65,5 +65,6 @@ type MirrorConfig struct {
 	// CredentialStrategy specifies what strategy to employ when returning registry credentials.
 	// Defaults to `MirrorCredentialsOnly`.
 	// +optional
+	//nolint:tagliatelle // Prevents stuttering.
 	MirrorCredentialsStrategy MirrorCredentialsStrategy `json:"credentialsStrategy"`
 }

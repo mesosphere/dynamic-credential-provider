@@ -10,7 +10,7 @@ echo '{
   "kind":"CredentialProviderResponse",
   "apiVersion":"credentialprovider.kubelet.k8s.io/v1alpha1",
   "cacheKeyType":"Image",
-  "cacheDuration":"10s",
+  "cacheDuration":"5s",
   "auth":{
     "*.v1alpha1": {"username":"v1alpha1user","password":"v1alpha1password"}
   }

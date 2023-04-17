@@ -34,6 +34,7 @@ linters:
     - revive
     - staticcheck
     - stylecheck
+    - tagliatelle
     - tenv
     - thelper
     - tparallel
@@ -88,6 +89,9 @@ linters-settings:
             allowFloats: "0.0,0.,1.0,1.,2.0,2."
       - name: argument-limit
         arguments: [4]
+      - name: comment-spacings
+        arguments:
+          - nolint
       - name: cognitive-complexity
         disabled: true
       - name: function-length
@@ -104,6 +108,11 @@ linters-settings:
         arguments: [10]
       - name: function-result-limit
         arguments: [4]
+  tagliatelle:
+    case:
+      use-field-name: true
+      rules:
+        json: camel
 
 issues:
   exclude-rules:

@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/kubelet/pkg/apis/credentialprovider/install"
-	"k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
+	v1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
 
 	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/plugin"
 )
@@ -41,7 +41,7 @@ func (s staticProvider) GetCredentials(
 	_ context.Context,
 	_ string,
 	_ []string,
-) (response *v1beta1.CredentialProviderResponse, err error) {
+) (response *v1.CredentialProviderResponse, err error) {
 	credentials, err := os.ReadFile(s.credentialsFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading credentials file: %w", err)
@@ -50,8 +50,8 @@ func (s staticProvider) GetCredentials(
 	return decodeResponse(credentials)
 }
 
-func decodeResponse(data []byte) (*v1beta1.CredentialProviderResponse, error) {
-	obj, gvk, err := codecs.UniversalDecoder(v1beta1.SchemeGroupVersion).Decode(data, nil, nil)
+func decodeResponse(data []byte) (*v1.CredentialProviderResponse, error) {
+	obj, gvk, err := codecs.UniversalDecoder(v1.SchemeGroupVersion).Decode(data, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -60,11 +60,11 @@ func decodeResponse(data []byte) (*v1beta1.CredentialProviderResponse, error) {
 		return nil, fmt.Errorf("kind was %q, expected CredentialProviderResponse", gvk.Kind)
 	}
 
-	if gvk.Group != v1beta1.GroupName {
-		return nil, fmt.Errorf("group was %q, expected %s", gvk.Group, v1beta1.GroupName)
+	if gvk.Group != v1.GroupName {
+		return nil, fmt.Errorf("group was %q, expected %s", gvk.Group, v1.GroupName)
 	}
 
-	response, ok := obj.(*v1beta1.CredentialProviderResponse)
+	response, ok := obj.(*v1.CredentialProviderResponse)
 	if !ok {
 		return nil, fmt.Errorf("unable to convert %T to *CredentialProviderResponse", obj)
 	}
