@@ -8,7 +8,7 @@ echo >&2 "$(</dev/stdin)"
 
 echo '{
   "kind":"CredentialProviderResponse",
-  "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
+  "apiVersion":"credentialprovider.kubelet.k8s.io/v1",
   "cacheKeyType":"Image",
   "cacheDuration":"5s",
   "auth":{

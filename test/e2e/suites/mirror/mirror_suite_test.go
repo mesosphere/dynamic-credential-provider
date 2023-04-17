@@ -171,7 +171,8 @@ var _ = SynchronizedBeforeSuite(
 					kubeadmJoinPatchKubeletCredentialProviderExtraArgs,
 				},
 				Nodes: []v1alpha4.Node{{
-					Role: v1alpha4.ControlPlaneRole,
+					Role:  v1alpha4.ControlPlaneRole,
+					Image: "ghcr.io/mesosphere/kind-node:v1.26.4",
 					ExtraMounts: []v1alpha4.Mount{{
 						HostPath:      mirrorRegistry.CACertFile(),
 						ContainerPath: "/etc/containerd/mirror-registry-ca.pem",

@@ -5,7 +5,7 @@ apiVersion: credentialprovider.d2iq.com/v1alpha1
 kind: DynamicCredentialProviderConfig
 credentialProviderPluginBinDir: testdata
 credentialProviders:
-  apiVersion: kubelet.config.k8s.io/v1beta1
+  apiVersion: kubelet.config.k8s.io/v1
   kind: CredentialProviderConfig
   providers:
   - name: staticcredentialprovider-v1alpha1.sh
@@ -16,3 +16,7 @@ credentialProviders:
     matchImages:
       - '*.v1beta1'
     apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+  - name: staticcredentialprovider-v1.sh
+    matchImages:
+      - '*.v1'
+    apiVersion: credentialprovider.kubelet.k8s.io/v1

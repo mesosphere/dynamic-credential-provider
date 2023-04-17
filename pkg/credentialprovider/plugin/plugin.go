@@ -15,7 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
+	"k8s.io/kubelet/pkg/apis/credentialprovider/install"
+	v1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
 )
 
 var (
@@ -25,8 +26,8 @@ var (
 
 //nolint:gochecknoinits // init is idiomatically used to set up schemes
 func init() {
-	utilruntime.Must(v1beta1.AddToScheme(scheme))
-	utilruntime.Must(scheme.SetVersionPriority(v1beta1.SchemeGroupVersion))
+	install.Install(scheme)
+	utilruntime.Must(scheme.SetVersionPriority(v1.SchemeGroupVersion))
 }
 
 // CredentialProvider is an interface implemented by the kubelet credential provider plugin to fetch
@@ -36,7 +37,7 @@ type CredentialProvider interface {
 		ctx context.Context,
 		image string,
 		args []string,
-	) (*v1beta1.CredentialProviderResponse, error)
+	) (*v1.CredentialProviderResponse, error)
 }
 
 // ExecPlugin implements the exec-based plugin for fetching credentials that is invoked by the kubelet.
@@ -51,7 +52,7 @@ func NewProvider(plugin CredentialProvider) *ExecPlugin {
 }
 
 // Run executes the credential provider plugin. Required information for the plugin request (in
-// the form of v1beta1.CredentialProviderRequest) is provided via stdin from the kubelet.
+// the form of v1.CredentialProviderRequest) is provided via stdin from the kubelet.
 // The CredentialProviderResponse, containing the username/password required for pulling
 // the provided image, will be sent back to the kubelet via stdout.
 func (e *ExecPlugin) Run(ctx context.Context) error {
@@ -75,7 +76,7 @@ func (e *ExecPlugin) runPlugin(ctx context.Context, r io.Reader, w io.Writer, ar
 		return err
 	}
 
-	if gvk.GroupVersion() != v1beta1.SchemeGroupVersion {
+	if gvk.GroupVersion() != v1.SchemeGroupVersion {
 		return fmt.Errorf("%w: %s", ErrUnsupportedAPIVersion, gvk)
 	}
 
@@ -118,8 +119,8 @@ var (
 	ErrConversionFailure = errors.New("conversion failure")
 )
 
-func decodeRequest(data []byte) (*v1beta1.CredentialProviderRequest, error) {
-	obj, gvk, err := codecs.UniversalDecoder(v1beta1.SchemeGroupVersion).Decode(data, nil, nil)
+func decodeRequest(data []byte) (*v1.CredentialProviderRequest, error) {
+	obj, gvk, err := codecs.UniversalDecoder(v1.SchemeGroupVersion).Decode(data, nil, nil)
 	if err != nil {
 		if runtime.IsNotRegisteredError(err) {
 			return nil, fmt.Errorf("%w: %v", ErrUnsupportedRequestKind, err)
@@ -135,14 +136,14 @@ func decodeRequest(data []byte) (*v1beta1.CredentialProviderRequest, error) {
 		)
 	}
 
-	if gvk.Group != v1beta1.GroupName {
+	if gvk.Group != v1.GroupName {
 		return nil, fmt.Errorf(
 			"%w: %s (expected %s)",
-			ErrUnsupportedAPIVersion, gvk.GroupVersion(), v1beta1.SchemeGroupVersion,
+			ErrUnsupportedAPIVersion, gvk.GroupVersion(), v1.SchemeGroupVersion,
 		)
 	}
 
-	request, ok := obj.(*v1beta1.CredentialProviderRequest)
+	request, ok := obj.(*v1.CredentialProviderRequest)
 	if !ok {
 		return nil, fmt.Errorf(
 			"%w: unable to convert %T to *CredentialProviderRequest",
@@ -154,14 +155,14 @@ func decodeRequest(data []byte) (*v1beta1.CredentialProviderRequest, error) {
 	return request, nil
 }
 
-func encodeResponse(response *v1beta1.CredentialProviderResponse) ([]byte, error) {
+func encodeResponse(response *v1.CredentialProviderResponse) ([]byte, error) {
 	mediaType := "application/json"
 	info, ok := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), mediaType)
 	if !ok {
 		return nil, fmt.Errorf("unsupported media type %q", mediaType)
 	}
 
-	encoder := codecs.EncoderForVersion(info.Serializer, v1beta1.SchemeGroupVersion)
+	encoder := codecs.EncoderForVersion(info.Serializer, v1.SchemeGroupVersion)
 	data, err := runtime.Encode(encoder, response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode response: %v", err)

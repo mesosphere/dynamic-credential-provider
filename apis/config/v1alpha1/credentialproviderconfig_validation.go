@@ -22,7 +22,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/kubelet/config/v1beta1"
+	kubeletconfigv1 "k8s.io/kubelet/config/v1"
+	credentialproviderv1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
 	credentialproviderv1alpha1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1alpha1"
 	credentialproviderv1beta1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
 
@@ -32,6 +33,7 @@ import (
 var APIVersions = map[string]schema.GroupVersion{
 	credentialproviderv1alpha1.SchemeGroupVersion.String(): credentialproviderv1alpha1.SchemeGroupVersion,
 	credentialproviderv1beta1.SchemeGroupVersion.String():  credentialproviderv1beta1.SchemeGroupVersion,
+	credentialproviderv1.SchemeGroupVersion.String():       credentialproviderv1.SchemeGroupVersion,
 }
 
 // validateCredentialProviderConfig validates CredentialProviderConfig.
@@ -39,7 +41,7 @@ var APIVersions = map[string]schema.GroupVersion{
 //
 //nolint:revive // This is copied as is from upstream so not refactored to reduce cyclomatic complexity.
 func validateCredentialProviderConfig(
-	config *v1beta1.CredentialProviderConfig,
+	config *kubeletconfigv1.CredentialProviderConfig,
 	rootPath *field.Path,
 ) field.ErrorList {
 	allErrs := field.ErrorList{}

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
+	v1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
 )
 
 type fakePlugin struct{}
@@ -21,12 +21,12 @@ func (fakePlugin) GetCredentials(
 	_ context.Context,
 	_ string,
 	_ []string,
-) (*v1beta1.CredentialProviderResponse, error) {
-	return &v1beta1.CredentialProviderResponse{
-		CacheKeyType: v1beta1.RegistryPluginCacheKeyType,
+) (*v1.CredentialProviderResponse, error) {
+	return &v1.CredentialProviderResponse{
+		CacheKeyType: v1.RegistryPluginCacheKeyType,
 		//nolint:revive // Dummy value in test file, no need for const.
 		CacheDuration: &metav1.Duration{Duration: 10 * time.Minute},
-		Auth: map[string]v1beta1.AuthConfig{
+		Auth: map[string]v1.AuthConfig{
 			"*.registry.io": {
 				Username: "user",
 				Password: "password",
@@ -47,15 +47,15 @@ func Test_runPlugin(t *testing.T) {
 		{
 			name: "successful test case",
 			//nolint:lll // Just a long string.
-			req: `{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1","image":"test.registry.io/foobar"}`,
+			req: `{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1","image":"test.registry.io/foobar"}`,
 			//nolint:lll // Just a long string.
-			expectedOut: `{"kind":"CredentialProviderResponse","apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1","cacheKeyType":"Registry","cacheDuration":"10m0s","auth":{"*.registry.io":{"username":"user","password":"password"}}}
+			expectedOut: `{"kind":"CredentialProviderResponse","apiVersion":"credentialprovider.kubelet.k8s.io/v1","cacheKeyType":"Registry","cacheDuration":"10m0s","auth":{"*.registry.io":{"username":"user","password":"password"}}}
 `,
 		},
 		{
 			name: "invalid kind",
 			//nolint:lll // Just a long string.
-			req:       `{"kind":"CredentialProviderFoo","apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1","image":"test.registry.io/foobar"}`,
+			req:       `{"kind":"CredentialProviderFoo","apiVersion":"credentialprovider.kubelet.k8s.io/v1","image":"test.registry.io/foobar"}`,
 			expectErr: ErrUnsupportedRequestKind,
 		},
 		{
@@ -65,9 +65,8 @@ func Test_runPlugin(t *testing.T) {
 			expectErr: ErrUnsupportedAPIVersion,
 		},
 		{
-			name: "empty image",
-			//nolint:lll // Just a long string.
-			req:       `{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1","image":""}`,
+			name:      "empty image",
+			req:       `{"kind":"CredentialProviderRequest","apiVersion":"credentialprovider.kubelet.k8s.io/v1","image":""}`,
 			expectErr: ErrEmptyImageInRequest,
 		},
 	}

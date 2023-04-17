@@ -133,8 +133,8 @@ var _ = Describe("Successful",
 				ctx,
 				"dynamic-credential-provider",
 				filepath.Join("..", "..", "..", "..", "charts", "dynamic-credential-provider"),
-				map[string]interface{}{
-					"image": map[string]interface{}{"tag": namedImg.(reference.NamedTagged).Tag()},
+				map[string]any{
+					"image": map[string]any{"tag": namedImg.(reference.NamedTagged).Tag()},
 				},
 				e2eConfig.Kubeconfig,
 				metav1.NamespaceSystem,

@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/klog/v2"
 	"k8s.io/kubelet/pkg/apis/credentialprovider/install"
-	credentialproviderv1beta1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
+	credentialproviderv1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
 
 	"github.com/mesosphere/dynamic-credential-provider/apis/config/v1alpha1"
 	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/plugin"
@@ -121,11 +121,11 @@ func (p *dynamicProvider) GetCredentials(
 	_ context.Context,
 	img string,
 	_ []string,
-) (*credentialproviderv1beta1.CredentialProviderResponse, error) {
+) (*credentialproviderv1.CredentialProviderResponse, error) {
 	p.providersMutex.RLock()
 	defer p.providersMutex.RUnlock()
 
-	authMap := map[string]credentialproviderv1beta1.AuthConfig{}
+	authMap := map[string]credentialproviderv1.AuthConfig{}
 
 	mirrorAuthConfig, cacheDuration, mirrorAuthFound, err := p.getMirrorCredentialsForImage(img)
 	if err != nil {
@@ -133,7 +133,7 @@ func (p *dynamicProvider) GetCredentials(
 	}
 
 	var (
-		originAuthConfig    credentialproviderv1beta1.AuthConfig
+		originAuthConfig    credentialproviderv1.AuthConfig
 		originCacheDuration time.Duration
 		originAuthFound     bool
 	)
@@ -161,22 +161,22 @@ func (p *dynamicProvider) GetCredentials(
 		}
 	}
 
-	return &credentialproviderv1beta1.CredentialProviderResponse{
+	return &credentialproviderv1.CredentialProviderResponse{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: credentialproviderv1beta1.SchemeGroupVersion.String(),
+			APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
 			Kind:       "CredentialProviderResponse",
 		},
-		CacheKeyType:  credentialproviderv1beta1.ImagePluginCacheKeyType,
+		CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
 		CacheDuration: &metav1.Duration{Duration: cacheDuration},
 		Auth:          authMap,
 	}, nil
 }
 
 func updateAuthConfigMapForMirror(
-	authMap map[string]credentialproviderv1beta1.AuthConfig,
+	authMap map[string]credentialproviderv1.AuthConfig,
 	img string,
 	mirrorCredentialsStrategy v1alpha1.MirrorCredentialsStrategy,
-	mirrorAuthConfig credentialproviderv1beta1.AuthConfig,
+	mirrorAuthConfig credentialproviderv1.AuthConfig,
 ) error {
 	globbedDomain, err := urlglobber.GlobbedDomainForImage(img)
 	if err != nil {
@@ -229,15 +229,15 @@ func updateAuthConfigMapForMirror(
 
 func (p *dynamicProvider) getMirrorCredentialsForImage(
 	img string,
-) (credentialproviderv1beta1.AuthConfig, time.Duration, bool, error) {
+) (credentialproviderv1.AuthConfig, time.Duration, bool, error) {
 	// If mirror is not configured then return no credentials for the mirror.
 	if p.cfg.Mirror == nil {
-		return credentialproviderv1beta1.AuthConfig{}, 0, false, nil
+		return credentialproviderv1.AuthConfig{}, 0, false, nil
 	}
 
 	imgURL, err := urlglobber.ParsePotentiallySchemelessURL(img)
 	if err != nil {
-		return credentialproviderv1beta1.AuthConfig{}, 0, false, fmt.Errorf(
+		return credentialproviderv1.AuthConfig{}, 0, false, fmt.Errorf(
 			"failed to parse image %q to a URL: %w",
 			img,
 			err,
@@ -246,7 +246,7 @@ func (p *dynamicProvider) getMirrorCredentialsForImage(
 
 	mirrorURL, err := urlglobber.ParsePotentiallySchemelessURL(p.cfg.Mirror.Endpoint)
 	if err != nil {
-		return credentialproviderv1beta1.AuthConfig{}, 0, false, fmt.Errorf(
+		return credentialproviderv1.AuthConfig{}, 0, false, fmt.Errorf(
 			"failed to parse mirror %q to a URL: %w",
 			img,
 			err,
@@ -260,14 +260,14 @@ func (p *dynamicProvider) getMirrorCredentialsForImage(
 }
 
 func (p *dynamicProvider) getCredentialsForImage(img string) (
-	authConfig credentialproviderv1beta1.AuthConfig, cacheDuration time.Duration, found bool, err error,
+	authConfig credentialproviderv1.AuthConfig, cacheDuration time.Duration, found bool, err error,
 ) {
 	var longestMatchedURL string
 
 	for _, prov := range p.providers {
 		resp, err := prov.Provide(img)
 		if err != nil {
-			return credentialproviderv1beta1.AuthConfig{}, 0, false, fmt.Errorf(
+			return credentialproviderv1.AuthConfig{}, 0, false, fmt.Errorf(
 				"failed to call plugin: %w",
 				err,
 			)
@@ -277,20 +277,20 @@ func (p *dynamicProvider) getCredentialsForImage(img string) (
 			continue
 		}
 
-		v1beta1Resp := &credentialproviderv1beta1.CredentialProviderResponse{}
-		if err := scheme.Convert(resp, v1beta1Resp, nil); err != nil {
-			return credentialproviderv1beta1.AuthConfig{},
+		v1Resp := &credentialproviderv1.CredentialProviderResponse{}
+		if err := scheme.Convert(resp, v1Resp, nil); err != nil {
+			return credentialproviderv1.AuthConfig{},
 				0,
 				false,
 				fmt.Errorf(
 					"failed to convert response from type %T to type %T: %w",
 					resp,
-					v1beta1Resp,
+					v1Resp,
 					err,
 				)
 		}
 
-		for k, v := range v1beta1Resp.Auth {
+		for k, v := range v1Resp.Auth {
 			if matched, _ := urlglobber.URLsMatchStr(k, img); !matched {
 				continue
 			}
@@ -300,7 +300,7 @@ func (p *dynamicProvider) getCredentialsForImage(img string) (
 				authConfig = v
 				cacheDuration = prov.DefaultCacheDuration()
 				if resp.CacheDuration != nil {
-					cacheDuration = v1beta1Resp.CacheDuration.Duration
+					cacheDuration = v1Resp.CacheDuration.Duration
 				}
 			}
 		}

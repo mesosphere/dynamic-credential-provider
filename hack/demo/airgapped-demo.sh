@@ -122,7 +122,7 @@ version = 2
 EOF
 
 cat <<EOF >"${DEMODATA_DIR}/image-credential-provider-config.yaml"
-apiVersion: kubelet.config.k8s.io/v1beta1
+apiVersion: kubelet.config.k8s.io/v1
 kind: CredentialProviderConfig
 providers:
 - name: dynamic-credential-provider
@@ -139,7 +139,7 @@ providers:
   - "*.*.*.*.*"
   - "*.*.*.*.*.*"
   defaultCacheDuration: "0s"
-  apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+  apiVersion: credentialprovider.kubelet.k8s.io/v1
 EOF
 
 cat <<EOF >"${DEMODATA_DIR}/dynamic-credential-provider-config.yaml"
@@ -150,19 +150,19 @@ mirror:
   credentialsStrategy: MirrorCredentialsFirst
 credentialProviderPluginBinDir: /etc/kubernetes/image-credential-provider/
 credentialProviders:
-  apiVersion: kubelet.config.k8s.io/v1beta1
+  apiVersion: kubelet.config.k8s.io/v1
   kind: CredentialProviderConfig
   providers:
   - name: static-mirror-credential-provider
     matchImages:
     - "${REGISTRY_ADDRESS}:${REGISTRY_PORT}"
     defaultCacheDuration: "0s"
-    apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+    apiVersion: credentialprovider.kubelet.k8s.io/v1
   - name: static-docker-io-credential-provider
     matchImages:
     - "docker.io"
     defaultCacheDuration: "0s"
-    apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+    apiVersion: credentialprovider.kubelet.k8s.io/v1
 EOF
 
 mkdir -p "${DEMODATA_DIR}/image-credential-provider/"
@@ -176,7 +176,7 @@ echo "\$(</dev/stdin)" >> /etc/kubernetes/image-credential-provider/req.txt
 # This is an initial provider that returns a dummy reponse and will be replaced after the cluster starts up
 echo '{
   "kind":"CredentialProviderResponse",
-  "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
+  "apiVersion":"credentialprovider.kubelet.k8s.io/v1",
   "cacheKeyType":"Registry",
   "cacheDuration":"5s",
   "auth":{
@@ -195,7 +195,7 @@ echo "\$(</dev/stdin)" >> /etc/kubernetes/image-credential-provider/req.txt
 # This is an initial provider that returns a dummy reponse and will be replaced after the cluster starts up
 echo '{
   "kind":"CredentialProviderResponse",
-  "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
+  "apiVersion":"credentialprovider.kubelet.k8s.io/v1",
   "cacheKeyType":"Image",
   "cacheDuration":"1h",
   "auth":{

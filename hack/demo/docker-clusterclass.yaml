@@ -353,7 +353,7 @@ spec:
                   path:  "/etc/kubernetes/image-credential-provider-config.yaml"
                   permissions: "0600"
                   content: |
-                    apiVersion: kubelet.config.k8s.io/v1beta1
+                    apiVersion: kubelet.config.k8s.io/v1
                     kind: CredentialProviderConfig
                     providers:
                     - name: dynamic-credential-provider
@@ -370,7 +370,7 @@ spec:
                       - "*.*.*.*.*"
                       - "*.*.*.*.*.*"
                       defaultCacheDuration: "0s"
-                      apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+                      apiVersion: credentialprovider.kubelet.k8s.io/v1
             - op: add
               path: "/spec/template/spec/kubeadmConfigSpec/files/-"
               valueFrom:
@@ -380,7 +380,7 @@ spec:
                   content: |
                     {
                       "kind":"CredentialProviderResponse",
-                      "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
+                      "apiVersion":"credentialprovider.kubelet.k8s.io/v1",
                       "cacheKeyType":"Registry",
                       "cacheDuration":"5s",
                       "auth":{
@@ -404,7 +404,7 @@ spec:
                       endpoint: "{{ index .mirrorEndpoints 0}}"
                       credentialsStrategy: {{ $registryCredentialStrategy }}{{ end }}{{ end }}
                     credentialProviders:
-                      apiVersion: kubelet.config.k8s.io/v1beta1
+                      apiVersion: kubelet.config.k8s.io/v1
                       kind: CredentialProviderConfig
                       providers:
                       - name: static-credential-provider
@@ -414,7 +414,7 @@ spec:
                           {{- range .registryCredentials }}{{ if .staticCredentials }}
                           - "{{ .registryHost }}"{{ end }}{{ end }}
                         defaultCacheDuration: "0s"
-                        apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+                        apiVersion: credentialprovider.kubelet.k8s.io/v1
         - selector:
             kind: KubeadmConfigTemplate
             apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
@@ -430,7 +430,7 @@ spec:
                   path:  "/etc/kubernetes/image-credential-provider-config.yaml"
                   permissions: "0600"
                   content: |
-                    apiVersion: kubelet.config.k8s.io/v1beta1
+                    apiVersion: kubelet.config.k8s.io/v1
                     kind: CredentialProviderConfig
                     providers:
                     - name: dynamic-credential-provider
@@ -447,7 +447,7 @@ spec:
                       - "*.*.*.*.*"
                       - "*.*.*.*.*.*"
                       defaultCacheDuration: "0s"
-                      apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+                      apiVersion: credentialprovider.kubelet.k8s.io/v1
             - op: add
               path: "/spec/template/spec/files/-"
               valueFrom:
@@ -457,7 +457,7 @@ spec:
                   content: |
                     {
                       "kind":"CredentialProviderResponse",
-                      "apiVersion":"credentialprovider.kubelet.k8s.io/v1beta1",
+                      "apiVersion":"credentialprovider.kubelet.k8s.io/v1",
                       "cacheKeyType":"Registry",
                       "cacheDuration":"5s",
                       "auth":{
@@ -481,7 +481,7 @@ spec:
                       endpoint: "{{ index .mirrorEndpoints 0}}"
                       credentialsStrategy: {{ $registryCredentialStrategy }}{{ end }}{{ end }}
                     credentialProviders:
-                      apiVersion: kubelet.config.k8s.io/v1beta1
+                      apiVersion: kubelet.config.k8s.io/v1
                       kind: CredentialProviderConfig
                       providers:
                       - name: static-credential-provider
@@ -491,7 +491,7 @@ spec:
                           {{- range .registryCredentials }}{{ if .staticCredentials }}
                           - "{{ .registryHost }}"{{ end }}{{ end }}
                         defaultCacheDuration: "0s"
-                        apiVersion: credentialprovider.kubelet.k8s.io/v1beta1
+                        apiVersion: credentialprovider.kubelet.k8s.io/v1
     - name: containerdConfigurationAndRestart
       description: "Sets the container configuration in container runtime config and restarts containerd."
       enabledIf: '{{ if .registryMirrors }}{{ gt (len .registryMirrors) 0 }}{{ else }}false{{ end }}'

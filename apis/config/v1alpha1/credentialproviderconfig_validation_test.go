@@ -22,7 +22,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	kubeletconfig "k8s.io/kubelet/config/v1beta1"
+	kubeletconfigv1 "k8s.io/kubelet/config/v1"
 	"k8s.io/kubelet/pkg/apis/credentialprovider/v1alpha1"
 )
 
@@ -38,18 +38,18 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 
 	testcases := []struct {
 		name      string
-		config    *kubeletconfig.CredentialProviderConfig
+		config    *kubeletconfigv1.CredentialProviderConfig
 		shouldErr bool
 	}{
 		{
 			name:      "no providers provided",
-			config:    &kubeletconfig.CredentialProviderConfig{},
+			config:    &kubeletconfigv1.CredentialProviderConfig{},
 			shouldErr: true,
 		},
 		{
 			name: "no matchImages provided",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 dummyName,
 						MatchImages:          []string{},
@@ -62,8 +62,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "no default cache duration provided",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:        dummyName,
 						MatchImages: []string{dummyRegistryDomain},
@@ -75,8 +75,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "name contains '/'",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 "foo/../bar",
 						MatchImages:          []string{dummyRegistryDomain},
@@ -89,8 +89,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "name is '.'",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 ".",
 						MatchImages:          []string{dummyRegistryDomain},
@@ -103,8 +103,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "name is '..'",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 "..",
 						MatchImages:          []string{dummyRegistryDomain},
@@ -117,8 +117,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "name contains spaces",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 "foo bar",
 						MatchImages:          []string{dummyRegistryDomain},
@@ -131,8 +131,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "no apiVersion",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 dummyName,
 						MatchImages:          []string{dummyRegistryDomain},
@@ -145,8 +145,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "invalid apiVersion",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 dummyName,
 						MatchImages:          []string{dummyRegistryDomain},
@@ -159,8 +159,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "negative default cache duration",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 dummyName,
 						MatchImages:          []string{dummyRegistryDomain},
@@ -173,8 +173,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "invalid match image",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 dummyName,
 						MatchImages:          []string{"%invalid%"},
@@ -187,8 +187,8 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		},
 		{
 			name: "valid config",
-			config: &kubeletconfig.CredentialProviderConfig{
-				Providers: []kubeletconfig.CredentialProvider{
+			config: &kubeletconfigv1.CredentialProviderConfig{
+				Providers: []kubeletconfigv1.CredentialProvider{
 					{
 						Name:                 dummyName,
 						MatchImages:          []string{dummyRegistryDomain},
