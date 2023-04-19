@@ -41,9 +41,9 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 	}
 
 	var tests []test
-	for _, v := range []string{"v1", "v1beta1", "v1alpha1"} {
+	for _, v := range []string{"v1", "v1beta1", "v1alpha1", "v1withpath/apath"} {
 		tests = append(tests, []test{{
-			name:    "mirror only",
+			name:    v + " mirror only",
 			cfgFile: filepath.Join("testdata", "config-with-mirror-only.yaml"),
 			img:     fmt.Sprintf(dummyImageFmt, v),
 			want: &credentialproviderv1.CredentialProviderResponse{
@@ -58,7 +58,7 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				},
 			},
 		}, {
-			name:    "mirror first",
+			name:    v + " mirror first",
 			cfgFile: filepath.Join("testdata", "config-with-mirror-first.yaml"),
 			img:     fmt.Sprintf(dummyImageFmt, v),
 			want: &credentialproviderv1.CredentialProviderResponse{
@@ -74,7 +74,7 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				},
 			},
 		}, {
-			name:    "mirror last",
+			name:    v + " mirror last",
 			cfgFile: filepath.Join("testdata", "config-with-mirror-last.yaml"),
 			img:     fmt.Sprintf(dummyImageFmt, v),
 			want: &credentialproviderv1.CredentialProviderResponse{
@@ -90,7 +90,7 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				},
 			},
 		}, {
-			name:    "mirror and no matching origin",
+			name:    v + " mirror and no matching origin",
 			cfgFile: filepath.Join("testdata", "config-with-mirror-last.yaml"),
 			img:     "noorigin/image:v1.2.3.4",
 			want: &credentialproviderv1.CredentialProviderResponse{
@@ -105,7 +105,7 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				},
 			},
 		}, {
-			name:    "no mirror",
+			name:    v + " no mirror",
 			cfgFile: filepath.Join("testdata", "config-no-mirror.yaml"),
 			img:     fmt.Sprintf(dummyImageFmt, v),
 			want: &credentialproviderv1.CredentialProviderResponse{
