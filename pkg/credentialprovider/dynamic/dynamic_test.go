@@ -42,84 +42,127 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 
 	var tests []test
 	for _, v := range []string{"v1", "v1beta1", "v1alpha1", "v1withpath/apath"} {
-		tests = append(tests, []test{{
-			name:    v + " mirror only",
-			cfgFile: filepath.Join("testdata", "config-with-mirror-only.yaml"),
-			img:     fmt.Sprintf(dummyImageFmt, v),
-			want: &credentialproviderv1.CredentialProviderResponse{
-				TypeMeta: v1.TypeMeta{
-					APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
-					Kind:       credentialProviderResponseKind,
-				},
-				CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-				CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
-				Auth: map[string]credentialproviderv1.AuthConfig{
-					fmt.Sprintf(dummyImageFmt, v): {Username: mirrorUser, Password: mirrorPassword},
-				},
-			},
-		}, {
-			name:    v + " mirror first",
-			cfgFile: filepath.Join("testdata", "config-with-mirror-first.yaml"),
-			img:     fmt.Sprintf(dummyImageFmt, v),
-			want: &credentialproviderv1.CredentialProviderResponse{
-				TypeMeta: v1.TypeMeta{
-					APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
-					Kind:       credentialProviderResponseKind,
-				},
-				CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-				CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
-				Auth: map[string]credentialproviderv1.AuthConfig{
-					fmt.Sprintf(dummyImageFmt, v): {Username: mirrorUser, Password: mirrorPassword},
-					wildcardDomain:                {Username: v + "user", Password: v + "password"},
+		tests = append(tests, []test{
+			{
+				name:    v + " mirror only",
+				cfgFile: filepath.Join("testdata", "config-with-mirror-only.yaml"),
+				img:     fmt.Sprintf(dummyImageFmt, v),
+				want: &credentialproviderv1.CredentialProviderResponse{
+					TypeMeta: v1.TypeMeta{
+						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
+						Kind:       credentialProviderResponseKind,
+					},
+					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
+					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					Auth: map[string]credentialproviderv1.AuthConfig{
+						fmt.Sprintf(dummyImageFmt, v): {
+							Username: mirrorUser,
+							Password: mirrorPassword,
+						},
+					},
 				},
 			},
-		}, {
-			name:    v + " mirror last",
-			cfgFile: filepath.Join("testdata", "config-with-mirror-last.yaml"),
-			img:     fmt.Sprintf(dummyImageFmt, v),
-			want: &credentialproviderv1.CredentialProviderResponse{
-				TypeMeta: v1.TypeMeta{
-					APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
-					Kind:       credentialProviderResponseKind,
-				},
-				CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-				CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
-				Auth: map[string]credentialproviderv1.AuthConfig{
-					wildcardDomain:                {Username: mirrorUser, Password: mirrorPassword},
-					fmt.Sprintf(dummyImageFmt, v): {Username: v + "user", Password: v + "password"},
-				},
-			},
-		}, {
-			name:    v + " mirror and no matching origin",
-			cfgFile: filepath.Join("testdata", "config-with-mirror-last.yaml"),
-			img:     "noorigin/image:v1.2.3.4",
-			want: &credentialproviderv1.CredentialProviderResponse{
-				TypeMeta: v1.TypeMeta{
-					APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
-					Kind:       credentialProviderResponseKind,
-				},
-				CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-				CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
-				Auth: map[string]credentialproviderv1.AuthConfig{
-					wildcardDomain: {Username: mirrorUser, Password: mirrorPassword},
+			{
+				name:    v + " mirror first",
+				cfgFile: filepath.Join("testdata", "config-with-mirror-first.yaml"),
+				img:     fmt.Sprintf(dummyImageFmt, v),
+				want: &credentialproviderv1.CredentialProviderResponse{
+					TypeMeta: v1.TypeMeta{
+						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
+						Kind:       credentialProviderResponseKind,
+					},
+					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
+					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					Auth: map[string]credentialproviderv1.AuthConfig{
+						fmt.Sprintf(dummyImageFmt, v): {
+							Username: mirrorUser,
+							Password: mirrorPassword,
+						},
+						wildcardDomain: {
+							Username: v + "user",
+							Password: v + "password",
+						},
+					},
 				},
 			},
-		}, {
-			name:    v + " no mirror",
-			cfgFile: filepath.Join("testdata", "config-no-mirror.yaml"),
-			img:     fmt.Sprintf(dummyImageFmt, v),
-			want: &credentialproviderv1.CredentialProviderResponse{
-				TypeMeta: v1.TypeMeta{
-					APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
-					Kind:       credentialProviderResponseKind,
-				},
-				CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-				CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
-				Auth: map[string]credentialproviderv1.AuthConfig{
-					fmt.Sprintf(dummyImageFmt, v): {Username: v + "user", Password: v + "password"},
+			{
+				name:    v + " mirror last",
+				cfgFile: filepath.Join("testdata", "config-with-mirror-last.yaml"),
+				img:     fmt.Sprintf(dummyImageFmt, v),
+				want: &credentialproviderv1.CredentialProviderResponse{
+					TypeMeta: v1.TypeMeta{
+						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
+						Kind:       credentialProviderResponseKind,
+					},
+					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
+					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					Auth: map[string]credentialproviderv1.AuthConfig{
+						wildcardDomain: {
+							Username: mirrorUser,
+							Password: mirrorPassword,
+						},
+						fmt.Sprintf(dummyImageFmt, v): {
+							Username: v + "user",
+							Password: v + "password",
+						},
+					},
 				},
 			},
-		}}...,
+			{
+				name:    v + " mirror and no matching origin",
+				cfgFile: filepath.Join("testdata", "config-with-mirror-last.yaml"),
+				img:     "noorigin/image:v1.2.3.4",
+				want: &credentialproviderv1.CredentialProviderResponse{
+					TypeMeta: v1.TypeMeta{
+						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
+						Kind:       credentialProviderResponseKind,
+					},
+					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
+					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					Auth: map[string]credentialproviderv1.AuthConfig{
+						wildcardDomain: {Username: mirrorUser, Password: mirrorPassword},
+					},
+				},
+			},
+			{
+				name:    v + " no mirror",
+				cfgFile: filepath.Join("testdata", "config-no-mirror.yaml"),
+				img:     fmt.Sprintf(dummyImageFmt, v),
+				want: &credentialproviderv1.CredentialProviderResponse{
+					TypeMeta: v1.TypeMeta{
+						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
+						Kind:       credentialProviderResponseKind,
+					},
+					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
+					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					Auth: map[string]credentialproviderv1.AuthConfig{
+						fmt.Sprintf(dummyImageFmt, v): {
+							Username: v + "user",
+							Password: v + "password",
+						},
+					},
+				},
+			},
+			{
+				name:    v + " mirror with path only",
+				cfgFile: filepath.Join("testdata", "config-with-mirror-with-path-only.yaml"),
+				img:     fmt.Sprintf(dummyImageFmt, v),
+				want: &credentialproviderv1.CredentialProviderResponse{
+					TypeMeta: v1.TypeMeta{
+						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
+						Kind:       credentialProviderResponseKind,
+					},
+					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
+					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					Auth: map[string]credentialproviderv1.AuthConfig{
+						fmt.Sprintf(dummyImageFmt, v): {
+							Username: mirrorUser,
+							Password: mirrorPassword,
+						},
+					},
+				},
+			},
+		}...,
 		)
 	}
 	for _, tt := range tests {
