@@ -7,13 +7,13 @@ go 1.20
 
 require (
 	k8s.io/cloud-provider-aws v1.27.1
-	sigs.k8s.io/cloud-provider-azure v1.27.1
+	sigs.k8s.io/cloud-provider-azure v1.27.2
 )
 
 require (
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest v0.11.28 // indirect
+	github.com/Azure/go-autorest/autorest v0.11.29 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.23 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/mocks v0.4.2 // indirect
