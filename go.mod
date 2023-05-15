@@ -12,7 +12,7 @@ replace (
 
 require (
 	github.com/distribution/distribution/v3 v3.0.0-20221208165359-362910506bc2
-	github.com/docker/distribution v2.8.1+incompatible
+	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/foomo/htpasswd v0.0.0-20200116085101-e3a90e78da9c
