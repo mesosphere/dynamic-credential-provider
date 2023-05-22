@@ -22,7 +22,7 @@ require (
 	github.com/onsi/gomega v1.27.6
 	github.com/otiai10/copy v1.11.0
 	github.com/sethvargo/go-password v0.2.0
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.2
 	go.etcd.io/etcd/client/pkg/v3 v3.5.9
