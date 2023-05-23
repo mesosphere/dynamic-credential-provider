@@ -141,9 +141,10 @@ func waitForDefaultServiceAccountToExist(ctx context.Context, kubeconfig string)
 		return fmt.Errorf("failed to create Kubernetes client from kubeconfig: %w", err)
 	}
 
-	return wait.PollInfiniteWithContext(
+	return wait.PollUntilContextCancel(
 		ctx,
 		time.Second*1,
+		true,
 		func(ctx context.Context) (bool, error) {
 			_, getSAErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceDefault).
 				Get(ctx, "default", metav1.GetOptions{})

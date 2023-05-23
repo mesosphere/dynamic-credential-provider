@@ -8,27 +8,29 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 var _ webhook.Validator = &DynamicCredentialProviderConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook can be registered for the type.
-func (c *DynamicCredentialProviderConfig) ValidateCreate() error {
+func (c *DynamicCredentialProviderConfig) ValidateCreate() (admission.Warnings, error) {
 	return c.validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook can be registered for the type.
-func (c *DynamicCredentialProviderConfig) ValidateUpdate(_ runtime.Object) error {
+func (c *DynamicCredentialProviderConfig) ValidateUpdate(
+	_ runtime.Object,
+) (admission.Warnings, error) {
 	return c.validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook can be registered for the type.
-func (*DynamicCredentialProviderConfig) ValidateDelete() error {
-	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+func (*DynamicCredentialProviderConfig) ValidateDelete() (admission.Warnings, error) {
+	return nil, nil
 }
 
-func (c *DynamicCredentialProviderConfig) validate() error {
+func (c *DynamicCredentialProviderConfig) validate() (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	allErrs = append(
@@ -40,10 +42,10 @@ func (c *DynamicCredentialProviderConfig) validate() error {
 	)
 
 	if len(allErrs) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	return errors.NewInvalid(
+	return nil, errors.NewInvalid(
 		GroupVersion.WithKind("DynamicCredentialProviderConfig").GroupKind(),
 		c.Name,
 		allErrs,

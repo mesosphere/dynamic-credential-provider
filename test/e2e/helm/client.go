@@ -157,7 +157,12 @@ func (rcg restClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
 		return nil, err
 	}
 
-	return apiutil.NewDiscoveryRESTMapper(rc)
+	httpClient, err := rest.HTTPClientFor(rc)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiutil.NewDiscoveryRESTMapper(rc, httpClient)
 }
 
 func (rcg restClientGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
