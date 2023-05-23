@@ -19,9 +19,6 @@ updates:
       - dependency-name: github.com/docker/docker
         update-types:
           - version-update:semver-major
-      - dependency-name: k8s.io/*
-        update-types:
-          - version-update:semver-minor
 
   - package-ecosystem: "gomod"
     directory: "/credential-providers"
