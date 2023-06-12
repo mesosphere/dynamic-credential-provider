@@ -7,7 +7,7 @@ go 1.20
 
 require (
 	k8s.io/cloud-provider-aws v1.27.2
-	sigs.k8s.io/cloud-provider-azure v1.27.4
+	sigs.k8s.io/cloud-provider-azure v1.27.5
 )
 
 require (
