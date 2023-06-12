@@ -28,4 +28,4 @@ dist/
 *.tar
 
 demodata/
-.envrc.local
+.envrc.local*

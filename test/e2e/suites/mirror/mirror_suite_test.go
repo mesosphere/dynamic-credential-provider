@@ -97,15 +97,22 @@ func testdataPath(f string) string {
 var _ = SynchronizedBeforeSuite(
 	func(ctx SpecContext) []byte {
 		By("Parse goreleaser artifacts")
-		var err error
-		artifacts, err = goreleaser.ParseArtifactsFile(filepath.Join("..",
+		artifactsFileAbs, err := filepath.Abs(filepath.Join("..",
 			"..",
 			"..",
 			"..",
-			"dist",
-			"artifacts.json",
-		))
+			"dist", "artifacts.json"))
 		Expect(err).NotTo(HaveOccurred())
+		relArtifacts, err := goreleaser.ParseArtifactsFile(artifactsFileAbs)
+		Expect(err).NotTo(HaveOccurred())
+
+		artifacts = make(goreleaser.Artifacts, 0, len(relArtifacts))
+		for _, a := range relArtifacts {
+			if a.Path != "" {
+				a.Path = filepath.Join(filepath.Dir(artifactsFileAbs), "..", a.Path)
+			}
+			artifacts = append(artifacts, a)
+		}
 
 		By("Starting Docker registry")
 		mirrorRegistry, err := registry.NewRegistry(ctx, GinkgoT().TempDir())
