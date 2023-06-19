@@ -37,7 +37,7 @@ require (
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	sigs.k8s.io/cli-utils v0.34.0
 	sigs.k8s.io/controller-runtime v0.15.0
-	sigs.k8s.io/kind v0.19.0
+	sigs.k8s.io/kind v0.20.0
 )
 
 require (
