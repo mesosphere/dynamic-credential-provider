@@ -30,29 +30,36 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Setup github authentication to ensure Github's rate limits are not hit.
       - if: ${{ steps.release-please.outputs.release_created }}
-        name: Install tools via asdf
-        uses: asdf-vm/actions/install@v2
+        name: Configure nix GitHub access-tokens
+        run: |
+          mkdir -p ~/.config/nix
+          echo "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}" >>~/.config/nix/nix.conf
+
+      - if: ${{ steps.release-please.outputs.release_created }}
+        name: Install devbox
+        uses: jetpack-io/devbox-install-action@v0.4.0
 
       - if: ${{ steps.release-please.outputs.release_created }}
         name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor  }}
-          password: ${{ secrets.GITHUB_TOKEN  }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - if: ${{ steps.release-please.outputs.release_created }}
         name: Release
-        run: make release
+        run: devbox run -- make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - if: ${{ steps.release-please.outputs.release_created  }}
+      - if: ${{ steps.release-please.outputs.release_created }}
         name: Publish Helm chart
         uses: stefanprodan/helm-gh-pages@v1.7.0
         with:
-          token: ${{ secrets.GITHUB_TOKEN  }}
-          app_version: ${{ steps.release-please.outputs.tag_name  }}
-          chart_version: ${{ steps.release-please.outputs.tag_name  }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          app_version: ${{ steps.release-please.outputs.tag_name }}
+          chart_version: ${{ steps.release-please.outputs.tag_name }}
           target_dir: repo

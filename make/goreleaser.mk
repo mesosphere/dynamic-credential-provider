@@ -12,7 +12,7 @@ export CLOUD_PROVIDER_GCP_VERSION := master
 
 .PHONY: build-snapshot
 build-snapshot: ## Builds a snapshot with goreleaser
-build-snapshot: install-tool.goreleaser ; $(info $(M) building snapshot $*)
+build-snapshot: ; $(info $(M) building snapshot $*)
 	goreleaser --debug=$(GORELEASER_DEBUG) \
 		build \
 		--snapshot \
@@ -23,7 +23,7 @@ build-snapshot: install-tool.goreleaser ; $(info $(M) building snapshot $*)
 
 .PHONY: release
 release: ## Builds a release with goreleaser
-release: install-tool.goreleaser ; $(info $(M) building release $*)
+release: ; $(info $(M) building release $*)
 	goreleaser --debug=$(GORELEASER_DEBUG) \
 		release \
 		--clean \
@@ -32,7 +32,7 @@ release: install-tool.goreleaser ; $(info $(M) building release $*)
 
 .PHONY: release-snapshot
 release-snapshot: ## Builds a snapshot release with goreleaser
-release-snapshot: install-tool.goreleaser ; $(info $(M) building snapshot release $*)
+release-snapshot: ; $(info $(M) building snapshot release $*)
 	goreleaser --debug=$(GORELEASER_DEBUG) \
 		release \
 		--snapshot \

@@ -3,7 +3,7 @@
 
 # syntax=docker/dockerfile:1
 
-FROM --platform=linux/${TARGETARCH} mesosphere/kind-node:v1.26.4
+FROM --platform=linux/${TARGETARCH} ghcr.io/mesosphere/kind-node:v1.26.6
 
 ARG TARGETARCH
 COPY dist/dynamic-credential-provider_linux_${TARGETARCH}_v1/dynamic-credential-provider /etc/kubernetes/image-credential-provider/

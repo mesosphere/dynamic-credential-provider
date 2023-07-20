@@ -24,11 +24,17 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Install asdf
-        uses: asdf-vm/actions/setup@v2
+      # Setup github authentication to ensure Github's rate limits are not hit.
+      - name: Configure nix GitHub access-tokens
+        run: |
+          mkdir -p ~/.config/nix
+          echo "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}" >>~/.config/nix/nix.conf
+
+      - name: Install devbox
+        uses: jetpack-io/devbox-install-action@v0.4.0
 
       - name: Run unit tests
-        run: make test
+        run: devbox run -- make test
 
       - name: Annotate tests
         if: always()
@@ -49,13 +55,20 @@ jobs:
         with:
           files: "test/e2e/**/*.go"
 
-      - name: Install asdf
-        if: steps.check_e2e_files.outputs.files_exists == 'true'
-        uses: asdf-vm/actions/setup@v2
+      # Setup github authentication to ensure Github's rate limits are not hit.
+      - if: steps.check_e2e_files.outputs.files_exists == 'true'
+        name: Configure nix GitHub access-tokens
+        run: |
+          mkdir -p ~/.config/nix
+          echo "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}" >>~/.config/nix/nix.conf
 
-      - name: Run e2e tests
-        if: steps.check_e2e_files.outputs.files_exists == 'true'
-        run: make e2e-test
+      - if: steps.check_e2e_files.outputs.files_exists == 'true'
+        name: Install devbox
+        uses: jetpack-io/devbox-install-action@v0.4.0
+
+      - if: steps.check_e2e_files.outputs.files_exists == 'true'
+        name: Run e2e tests
+        run: devbox run -- make e2e-test
 
   lint:
     runs-on: ubuntu-22.04
@@ -63,17 +76,27 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Gather tool versions
-        uses: jimmidyson/asdf-parse-tool-versions@v2
-        id: versions
+      # Setup github authentication to ensure Github's rate limits are not hit.
+      - name: Configure nix GitHub access-tokens
+        run: |
+          mkdir -p ~/.config/nix
+          echo "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}" >>~/.config/nix/nix.conf
+
+      - name: Install devbox
+        uses: jetpack-io/devbox-install-action@v0.4.0
+
+      - name: Collect tool versions
+        run: |
+          echo GO_VERSION="$(devbox run -- go version | cut -d' ' -f 3 | grep -o '[0-9.]\+')" >>"${GITHUB_ENV}"
+          echo GOLANGCI_LINT_VERSION="$(devbox run -- golangci-lint version --format short)" >>"${GITHUB_ENV}"
 
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
           fail_on_error: true
           reporter: github-pr-review
-          go_version: ${{ fromJson(steps.versions.outputs.tools).golang }}
-          golangci_lint_version: v${{ fromJson(steps.versions.outputs.tools).golangci-lint }}
+          go_version: ${{ env.GO_VERSION }}
+          golangci_lint_version: v${{ env.GOLANGCI_LINT_VERSION }}
 
   generated:
     runs-on: ubuntu-22.04
@@ -81,21 +104,20 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Install asdf
-        uses: asdf-vm/actions/setup@v2
+      # Setup github authentication to ensure Github's rate limits are not hit.
+      - name: Configure nix GitHub access-tokens
+        run: |
+          mkdir -p ~/.config/nix
+          echo "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}" >>~/.config/nix/nix.conf
+
+      - name: Install devbox
+        uses: jetpack-io/devbox-install-action@v0.4.0
 
       - name: Check generated files
-        run: make go-generate
+        run: devbox run -- make go-generate
 
       - name: Verify no changed files
-        uses: tj-actions/verify-changed-files@v16
-        id: verify-changed-files
-
-      - name: Fail if files have changed
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
-        run: |
-          echo "Changed files: ${{ steps.verify-changed-files.outputs.changed_files }}"
-          exit 1
+        run: git diff --exit-code
 
   pre-commit:
     runs-on: ubuntu-22.04
@@ -103,28 +125,22 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Gather tool versions
-        uses: jimmidyson/asdf-parse-tool-versions@v2
-        id: versions
+      # Setup github authentication to ensure Github's rate limits are not hit.
+      - name: Configure nix GitHub access-tokens
+        run: |
+          mkdir -p ~/.config/nix
+          echo "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}" >>~/.config/nix/nix.conf
 
-      - uses: actions/setup-go@v4
+      - name: Install devbox
+        uses: jetpack-io/devbox-install-action@v0.4.0
+
+      - name: Set up pre-commit cache
+        uses: actions/cache@v3
         with:
-          go-version: ${{ fromJson(steps.versions.outputs.tools).golang }}
-          check-latest: false
-          cache: true
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - uses: mfinelli/setup-shfmt@v2
-        with:
-          shfmt-version: ${{ fromJson(steps.versions.outputs.tools).shfmt }}
-
-      - name: Install asdf
-        uses: asdf-vm/actions/setup@v2
-
-      - name: Install helm-docs
-        run: make install-tool.helm-docs
-
-      - uses: pre-commit/action@v3.0.0
-        with:
-          extra_args: --all-files --show-diff-on-failure
+      - name: Run pre-commit
+        run: devbox run -- make pre-commit
         env:
-          SKIP: no-commit-to-branch,golangci-lint,go-generate
+          SKIP: no-commit-to-branch,golangci-lint

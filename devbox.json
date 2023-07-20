@@ -1,0 +1,32 @@
+{
+  "packages": [
+    "clusterctl@latest",
+    "crane@latest",
+    "ginkgo@latest",
+    "go@latest",
+    "gojq@latest",
+    "golangci-lint@latest",
+    "golines@latest",
+    "google-cloud-sdk@latest",
+    "goreleaser@latest",
+    "gotestsum@latest",
+    "helm-docs@latest",
+    "kubebuilder@latest",
+    "kubernetes-code-generator@latest",
+    "kubernetes-controller-tools@latest",
+    "kubernetes-helm@latest",
+    "pre-commit@latest",
+    "shfmt@latest",
+    "upx@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'Welcome to devbox!' > /dev/null"
+    ],
+    "scripts": {
+      "test": [
+        "echo \"Error: no test specified\" && exit 1"
+      ]
+    }
+  }
+}

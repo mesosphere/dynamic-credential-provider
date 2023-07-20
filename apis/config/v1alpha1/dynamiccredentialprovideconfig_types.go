@@ -4,7 +4,7 @@
 package v1alpha1
 
 //go:generate controller-gen object paths=.
-//go:generate bash -ec "cd ../../.. && defaulter-gen -h hack/boilerplate.go.txt -i ./apis/config/v1alpha1 -o ."
+//go:generate bash -ec "cd ../../.. && defaulter-gen -h hack/boilerplate.go.txt -i ./apis/config/v1alpha1 -o ../../../"
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
