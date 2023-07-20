@@ -5,11 +5,6 @@ module github.com/mesosphere/dynamic-credential-provider
 
 go 1.20
 
-replace (
-	github.com/docker/cli => github.com/docker/cli v20.10.24+incompatible
-	github.com/docker/docker => github.com/docker/docker v20.10.24+incompatible
-)
-
 require (
 	github.com/distribution/distribution/v3 v3.0.0-20230519140516-983358f8e250
 	github.com/docker/distribution v2.8.2+incompatible
