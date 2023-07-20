@@ -47,7 +47,7 @@ endif
 
 .PHONY: test.%
 test.%: ## Runs go tests for a specific module
-test.%: install-tool.go.gotestsum; $(info $(M) running tests$(if $(GOTEST_RUN), matching "$(GOTEST_RUN)") for $* module)
+test.%: ; $(info $(M) running tests$(if $(GOTEST_RUN), matching "$(GOTEST_RUN)") for $* module)
 	$(if $(filter-out root,$*),cd $* && )$(call go_test)
 
 .PHONY: integration-test
@@ -79,7 +79,6 @@ E2E_FLAKE_ATTEMPTS ?= 1
 
 .PHONY: e2e-test
 e2e-test: ## Runs e2e tests
-e2e-test: install-tool.golang install-tool.ginkgo
 ifneq ($(SKIP_BUILD),true)
 	$(MAKE) GOOS=linux release-snapshot
 endif
@@ -124,7 +123,7 @@ endif
 
 .PHONY: lint.%
 lint.%: ## Runs golangci-lint for a specific module
-lint.%: install-tool.golangci-lint install-tool.go.golines; $(info $(M) linting $* module)
+lint.%: ; $(info $(M) linting $* module)
 	$(if $(filter-out root,$*),cd $* && )find -name '*.go' ! -name 'zz_generated*.go' -exec golines -w {} \;
 	$(if $(filter-out root,$*),cd $* && )golangci-lint run --fix --config=$(GOLANGCI_CONFIG_FILE)
 	$(if $(filter-out root,$*),cd $* && )go fix ./...
@@ -140,7 +139,7 @@ endif
 
 .PHONY: mod-tidy.%
 mod-tidy.%: ## Runs go mod tidy for a specific module
-mod-tidy.%: install-tool.golang; $(info $(M) running go mod tidy for $* module)
+mod-tidy.%: ; $(info $(M) running go mod tidy for $* module)
 	$(if $(filter-out root,$*),cd $* && )go mod tidy -v -compat=1.17
 	$(if $(filter-out root,$*),cd $* && )go mod verify
 
@@ -155,16 +154,16 @@ endif
 
 .PHONY: go-clean.%
 go-clean.%: ## Cleans go build, test and modules caches for a specific module
-go-clean.%: install-tool.golang; $(info $(M) running go clean for $* module)
+go-clean.%: ; $(info $(M) running go clean for $* module)
 	$(if $(filter-out root,$*),cd $* && )go clean -r -i -cache -testcache -modcache
 
 .PHONY: go-generate
 go-generate: ## Runs go generate
-go-generate: install-tool.golang install-tool.kube-controller-tools install-tool.kube-code-generator; $(info $(M) running go generate)
+go-generate: ; $(info $(M) running go generate)
 	go generate -x ./...
 	go fix ./...
 
 .PHONY: go-mod-upgrade
 go-mod-upgrade: ## Interactive check for direct module dependency upgrades
-go-mod-upgrade: install-tool.golang install-tool.go.go-mod-upgrade ; $(info $(M) checking for direct module dependency upgrades)
+go-mod-upgrade: install-tool.go.go-mod-upgrade ; $(info $(M) checking for direct module dependency upgrades)
 	go-mod-upgrade
