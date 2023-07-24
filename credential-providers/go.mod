@@ -7,7 +7,7 @@ go 1.20
 
 require (
 	k8s.io/cloud-provider-aws v1.27.2
-	sigs.k8s.io/cloud-provider-azure v1.27.5
+	sigs.k8s.io/cloud-provider-azure v1.27.6
 )
 
 require (
@@ -43,10 +43,10 @@ require (
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
