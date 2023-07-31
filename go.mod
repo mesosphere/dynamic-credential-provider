@@ -30,7 +30,7 @@ require (
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubelet v0.27.4
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
-	sigs.k8s.io/cli-utils v0.34.0
+	sigs.k8s.io/cli-utils v0.35.0
 	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/kind v0.20.0
 )
