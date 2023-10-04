@@ -1,4 +1,4 @@
-# Copyright 2022 D2iQ, Inc. All rights reserved.
+# Copyright 2022-2023 D2iQ, Inc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 name: checks
@@ -20,6 +20,9 @@ permissions:
 jobs:
   unit-test:
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -44,7 +47,9 @@ jobs:
 
   e2e-test:
     runs-on: ubuntu-22.04
-
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -72,6 +77,9 @@ jobs:
 
   lint:
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -85,21 +93,25 @@ jobs:
       - name: Install devbox
         uses: jetpack-io/devbox-install-action@v0.7.0
 
-      - name: Collect tool versions
+      - name: Export golang and golangci-lint versions
+        id: versions
         run: |
-          echo GO_VERSION="$(devbox run -- go version | cut -d' ' -f 3 | grep -o '[0-9.]\+')" >>"${GITHUB_ENV}"
-          echo GOLANGCI_LINT_VERSION="$(devbox run -- golangci-lint version --format short)" >>"${GITHUB_ENV}"
+          echo "golangci-lint=$(devbox run -- golangci-lint version --format short)" >>"${GITHUB_OUTPUT}"
+          echo "golang=$(devbox run -- go version | grep -o "[[:digit:]]\+.[[:digit:]]\+\(.[[:digit:]]\+\)\?")" >>"${GITHUB_OUTPUT}"
 
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
           fail_on_error: true
           reporter: github-pr-review
-          go_version: ${{ env.GO_VERSION }}
-          golangci_lint_version: v${{ env.GOLANGCI_LINT_VERSION }}
+          golangci_lint_version: v${{ steps.versions.outputs.golangci-lint }}
+          go_version: v${{ steps.versions.outputs.golang }}
 
   generated:
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -119,11 +131,40 @@ jobs:
       - name: Verify no changed files
         run: git diff --exit-code
 
-  pre-commit:
+  lint-gha:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+
+      - name: actionlint
+        uses: reviewdog/action-actionlint@v1
+        with:
+          fail_on_error: true
+          reporter: github-pr-review
+
+  lint-dockerfile:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: actionlint
+        uses: reviewdog/action-hadolint@v1
+        with:
+          fail_on_error: true
+          reporter: github-pr-review
+
+  pre-commit:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       # Setup github authentication to ensure Github's rate limits are not hit.
       - name: Configure nix GitHub access-tokens
@@ -143,4 +184,76 @@ jobs:
       - name: Run pre-commit
         run: devbox run -- make pre-commit
         env:
-          SKIP: no-commit-to-branch,golangci-lint
+          SKIP: no-commit-to-branch,golangci-lint,actionlint-system,hadolint
+
+  lint-test-helm:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install devbox
+        uses: jetpack-io/devbox-install-action@v0.7.0
+        with:
+          enable-cache: true
+
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed="$(devbox run -- \
+            ct list-changed --config charts/ct-config.yaml \
+          )"
+          if [[ -n "$changed" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.list-changed.outputs.changed == 'true'
+        name: Run chart-testing (lint)
+        run: |
+          devbox run -- \
+            ct lint --config charts/ct-config.yaml
+
+      - if: steps.list-changed.outputs.changed == 'true'
+        name: Create kind cluster
+        run: |
+          devbox run -- \
+            kind create cluster \
+              --image=ghcr.io/mesosphere/kind-node:"$(devbox run -- kubectl version --output=json --client | devbox run -- gojq --raw-output .clientVersion.gitVersion)" \
+              --name=chart-testing
+        env:
+          KUBECONFIG: ct-kind-kubeconfig
+
+      - if: steps.list-changed.outputs.changed == 'true'
+        name: Build Docker images
+        run: |
+          devbox run -- \
+            make release-snapshot
+
+      - if: steps.list-changed.outputs.changed == 'true'
+        name: Sideload docker image
+        run: |
+          devbox run -- \
+            kind load docker-image \
+              --name chart-testing \
+              "$(devbox run -- gojq -r '.[] | select(.type == "Docker Image" and .goos == "linux" and .goarch == "amd64").name' dist/artifacts.json)"
+
+      - if: steps.list-changed.outputs.changed == 'true'
+        name: Run chart-testing (install)
+        run: |
+          devbox run -- \
+            ct install \
+              --config charts/ct-config.yaml \
+              --helm-extra-set-args "--set=image.tag=$(devbox run -- jq -r .version dist/metadata.json)"
+        env:
+          KUBECONFIG: ct-kind-kubeconfig
+
+      - if: steps.list-changed.outputs.changed == 'true' && always()
+        name: Delete chart-testing KinD cluster
+        run: |
+          devbox run -- \
+            kind delete cluster --name chart-testing || true

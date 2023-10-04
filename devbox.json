@@ -1,32 +1,29 @@
 {
   "packages": [
+    "actionlint@latest",
+    "chart-testing@3.8.0",
     "clusterctl@latest",
     "crane@latest",
     "ginkgo@latest",
     "go@latest",
+    "path:./hack/flakes/go-mod-upgrade",
     "gojq@latest",
-    "golangci-lint@latest",
+    "path:./hack/flakes/golangci-lint",
     "golines@latest",
     "google-cloud-sdk@latest",
     "goreleaser@latest",
     "gotestsum@latest",
+    "hadolint@latest",
     "helm-docs@latest",
     "kubebuilder@latest",
+    "kubectl@latest",
     "kubernetes-code-generator@latest",
     "kubernetes-controller-tools@latest",
     "kubernetes-helm@latest",
     "pre-commit@latest",
     "shfmt@latest",
-    "upx@latest"
-  ],
-  "shell": {
-    "init_hook": [
-      "echo 'Welcome to devbox!' > /dev/null"
-    ],
-    "scripts": {
-      "test": [
-        "echo \"Error: no test specified\" && exit 1"
-      ]
-    }
-  }
+    "upx@latest",
+    "yamale@latest",
+    "yamllint@latest"
+  ]
 }

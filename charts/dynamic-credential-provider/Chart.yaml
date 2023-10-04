@@ -7,3 +7,9 @@ description: A Helm chart for Kubernetes dynamic credential provider
 type: application
 version: "0.0.0-dev"
 appVersion: "v0.0.0-dev"
+maintainers:
+  - name: jimmidyson
+    email: jimmidyson@gmail.com
+    url: https://github.com/jimmidyson
+sources:
+- https://github.com/mesosphere/dynamic-credential-provider

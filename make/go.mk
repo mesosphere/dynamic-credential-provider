@@ -165,5 +165,5 @@ go-generate: ; $(info $(M) running go generate)
 
 .PHONY: go-mod-upgrade
 go-mod-upgrade: ## Interactive check for direct module dependency upgrades
-go-mod-upgrade: install-tool.go.go-mod-upgrade ; $(info $(M) checking for direct module dependency upgrades)
+go-mod-upgrade: ; $(info $(M) checking for direct module dependency upgrades)
 	go-mod-upgrade
