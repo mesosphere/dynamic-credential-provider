@@ -9,6 +9,16 @@
 
 A Helm chart for Kubernetes dynamic credential provider
 
+## Maintainers
+
+| Name | Email | Url |
+| ---- | ------ | --- |
+| jimmidyson | <jimmidyson@gmail.com> | <https://github.com/jimmidyson> |
+
+## Source Code
+
+* <https://github.com/mesosphere/dynamic-credential-provider>
+
 ## Values
 
 | Key | Type | Default | Description |
