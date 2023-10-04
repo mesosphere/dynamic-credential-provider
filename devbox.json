@@ -1,5 +1,7 @@
 {
   "packages": [
+    "actionlint@latest",
+    "chart-testing@3.8.0",
     "clusterctl@latest",
     "crane@latest",
     "ginkgo@latest",
@@ -11,13 +13,17 @@
     "google-cloud-sdk@latest",
     "goreleaser@latest",
     "gotestsum@latest",
+    "hadolint@latest",
     "helm-docs@latest",
     "kubebuilder@latest",
+    "kubectl@latest",
     "kubernetes-code-generator@latest",
     "kubernetes-controller-tools@latest",
     "kubernetes-helm@latest",
     "pre-commit@latest",
     "shfmt@latest",
-    "upx@latest"
+    "upx@latest",
+    "yamale@latest",
+    "yamllint@latest"
   ]
 }

@@ -1,6 +1,18 @@
 {
   "lockfile_version": "1",
   "packages": {
+    "actionlint@latest": {
+      "last_modified": "2023-09-20T16:29:35Z",
+      "resolved": "github:NixOS/nixpkgs/fe977679240ac2027b151ecca1bc6ce808c2e8af#actionlint",
+      "source": "devbox-search",
+      "version": "1.6.26"
+    },
+    "chart-testing@3.8.0": {
+      "last_modified": "2023-06-27T08:49:46Z",
+      "resolved": "github:NixOS/nixpkgs/b38e95ea6c15b9ce098556f410d715b262fa386a#chart-testing",
+      "source": "devbox-search",
+      "version": "3.8.0"
+    },
     "clusterctl@latest": {
       "last_modified": "2023-09-15T06:49:28Z",
       "resolved": "github:NixOS/nixpkgs/46688f8eb5cd6f1298d873d4d2b9cf245e09e88e#clusterctl",
@@ -55,6 +67,12 @@
       "source": "devbox-search",
       "version": "1.10.1"
     },
+    "hadolint@latest": {
+      "last_modified": "2023-09-15T06:49:28Z",
+      "resolved": "github:NixOS/nixpkgs/46688f8eb5cd6f1298d873d4d2b9cf245e09e88e#hadolint",
+      "source": "devbox-search",
+      "version": "2.12.0"
+    },
     "helm-docs@latest": {
       "last_modified": "2023-09-15T06:49:28Z",
       "resolved": "github:NixOS/nixpkgs/46688f8eb5cd6f1298d873d4d2b9cf245e09e88e#helm-docs",
@@ -66,6 +84,12 @@
       "resolved": "github:NixOS/nixpkgs/46688f8eb5cd6f1298d873d4d2b9cf245e09e88e#kubebuilder",
       "source": "devbox-search",
       "version": "3.11.1"
+    },
+    "kubectl@latest": {
+      "last_modified": "2023-09-15T06:49:28Z",
+      "resolved": "github:NixOS/nixpkgs/46688f8eb5cd6f1298d873d4d2b9cf245e09e88e#kubectl",
+      "source": "devbox-search",
+      "version": "1.28.1"
     },
     "kubernetes-code-generator@latest": {
       "last_modified": "2023-05-07T06:59:10Z",
@@ -102,6 +126,18 @@
       "resolved": "github:NixOS/nixpkgs/46688f8eb5cd6f1298d873d4d2b9cf245e09e88e#upx",
       "source": "devbox-search",
       "version": "4.1.0"
+    },
+    "yamale@latest": {
+      "last_modified": "2023-09-15T06:49:28Z",
+      "resolved": "github:NixOS/nixpkgs/46688f8eb5cd6f1298d873d4d2b9cf245e09e88e#yamale",
+      "source": "devbox-search",
+      "version": "4.0.4"
+    },
+    "yamllint@latest": {
+      "last_modified": "2023-09-09T09:21:36Z",
+      "resolved": "github:NixOS/nixpkgs/9108a20782535741433c304f6a4376cb8b364b89#yamllint",
+      "source": "devbox-search",
+      "version": "1.32.0"
     }
   }
 }
