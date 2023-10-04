@@ -4,8 +4,9 @@
     "crane@latest",
     "ginkgo@latest",
     "go@latest",
+    "path:./hack/flakes/go-mod-upgrade",
     "gojq@latest",
-    "golangci-lint@latest",
+    "path:./hack/flakes/golangci-lint",
     "golines@latest",
     "google-cloud-sdk@latest",
     "goreleaser@latest",
@@ -18,15 +19,5 @@
     "pre-commit@latest",
     "shfmt@latest",
     "upx@latest"
-  ],
-  "shell": {
-    "init_hook": [
-      "echo 'Welcome to devbox!' > /dev/null"
-    ],
-    "scripts": {
-      "test": [
-        "echo \"Error: no test specified\" && exit 1"
-      ]
-    }
-  }
+  ]
 }
