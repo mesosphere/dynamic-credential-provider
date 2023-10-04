@@ -43,6 +43,7 @@ repos:
     stages: [commit]
   - id: end-of-file-fixer
     stages: [commit]
+    exclude: ^charts/.+/README.md$
 - repo: https://github.com/rhysd/actionlint
   rev: v1.6.25
   hooks:
@@ -91,7 +92,7 @@ repos:
       - header.txt
       - --comment-style
       - //
-      - --use-current-year
+      - --allow-past-years
   - id: insert-license
     name: License headers - YAML and Makefiles
     stages: [commit]
@@ -99,7 +100,7 @@ repos:
     args:
       - --license-filepath
       - header.txt
-      - --use-current-year
+      - --allow-past-years
     exclude: ^charts/.+/(templates/.+\.yaml|crds/.+\.yaml)$
   - id: insert-license
     name: License headers - Markdown
@@ -111,7 +112,7 @@ repos:
       - header.txt
       - --comment-style
       - <!--|| -->
-      - --use-current-year
+      - --allow-past-years
 - repo: https://github.com/norwoodj/helm-docs
   rev: v1.11.2
   hooks:
