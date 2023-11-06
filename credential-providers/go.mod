@@ -6,7 +6,7 @@ module github.com/mesosphere/dynamic-credential-provider/credential-providers
 go 1.20
 
 require (
-	k8s.io/cloud-provider-aws v1.28.1
+	k8s.io/cloud-provider-aws v1.28.2
 	sigs.k8s.io/cloud-provider-azure v1.28.3
 )
 
@@ -53,10 +53,10 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.28.3 // indirect
 	k8s.io/apimachinery v0.28.3 // indirect
-	k8s.io/client-go v0.28.2 // indirect
-	k8s.io/component-base v0.28.2 // indirect
+	k8s.io/client-go v0.28.3 // indirect
+	k8s.io/component-base v0.28.3 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
-	k8s.io/kubelet v0.28.2 // indirect
+	k8s.io/kubelet v0.28.3 // indirect
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
