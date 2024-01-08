@@ -21,7 +21,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.11
-	golang.org/x/sync v0.5.0
+	golang.org/x/sync v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.13.3
 	k8s.io/api v0.28.4
