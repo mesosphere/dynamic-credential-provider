@@ -17,6 +17,9 @@ on:
 jobs:
   check:
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: z0al/dependent-issues@v1
         env:
