@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.2 (2024-01-16)
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
+### Other Changes
+* build: Tidy up goreleaser config by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/244
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.4.1...v0.4.2
+
 ## 0.4.1 (2024-01-16)
 
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
