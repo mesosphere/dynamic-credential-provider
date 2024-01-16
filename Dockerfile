@@ -38,9 +38,9 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         ./cmd/auth-provider-gcp
 
 # hadolint ignore=DL3029
-FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:1b4dbd7d38a0fd4bbaf5216a21a615d07b56747a96d3c650689cbb7fdc412b49 as linux-amd64
+FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:8758f80ad813de0232c696f6d60439182850415475c023109392c3e968070e66 as linux-amd64
 # hadolint ignore=DL3029
-FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:dcf9c9cafaa9c328eff2ceff5f6057588336b48c9b91ddc0913102b33bbce723 as linux-arm64
+FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:82f8020461a454c498a3123a14df39563a4ae2e3522174f8fa0ad0cdd8590a65 as linux-arm64
 
 # hadolint ignore=DL3006,DL3029
 FROM --platform=linux/${TARGETARCH} linux-${TARGETARCH}

@@ -1,14 +1,16 @@
 {
   "packages": [
     "actionlint@latest",
-    "chart-testing@3.8.0",
+    "bash@latest",
+    "chart-testing@latest",
     "clusterctl@latest",
+    "coreutils@latest",
     "crane@latest",
+    "findutils@latest",
     "ginkgo@latest",
+    "gnused@latest",
     "go@latest",
-    "path:./hack/flakes/go-mod-upgrade",
     "gojq@latest",
-    "path:./hack/flakes/golangci-lint",
     "golines@latest",
     "google-cloud-sdk@latest",
     "goreleaser@latest",
@@ -24,6 +26,8 @@
     "shfmt@latest",
     "upx@latest",
     "yamale@latest",
-    "yamllint@latest"
+    "yamllint@latest",
+    "path:./hack/flakes#golangci-lint",
+    "path:./hack/flakes#go-mod-upgrade"
   ]
 }
