@@ -12,4 +12,3 @@ include $(INCLUDE_DIR)go.mk
 include $(INCLUDE_DIR)goreleaser.mk
 include $(INCLUDE_DIR)docker.mk
 include $(INCLUDE_DIR)tag.mk
-include $(INCLUDE_DIR)upx.mk

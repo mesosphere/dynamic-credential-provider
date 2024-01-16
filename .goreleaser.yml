@@ -45,8 +45,6 @@ builds:
           env:
             - GOOS={{ .Os }}
             - GOARCH={{ .Arch }}
-      post:
-        - cmd: make SKIP_UPX={{ .IsSnapshot }} GOOS={{ .Os }} GOARCH={{ .Arch }} UPX_TARGET={{ .Path }} upx
   - id: static-credential-provider
     dir: ./cmd/static-credential-provider
     binary: static-credential-provider
@@ -70,8 +68,15 @@ builds:
           env:
             - GOOS={{ .Os }}
             - GOARCH={{ .Arch }}
-      post:
-        - cmd: make SKIP_UPX={{ if index .Env "SKIP_UPX" }}{{ .Env.SKIP_UPX }}{{ else }}{{ .IsSnapshot }}{{ end }} GOOS={{ .Os }} GOARCH={{ .Arch }} UPX_TARGET={{ .Path }} upx
+upx:
+  - enabled: "{{ .IsSnapshot }}"
+    goos:
+      - linux
+    compress: "9"
+    lzma: true
+    ids:
+      - dynamic-credential-provider
+      - static-credential-provider
 archives:
   - name_template: '{{ .ProjectName }}_v{{trimprefix .Version "v"}}_{{ .Os }}_{{ .Arch }}'
     builds:
