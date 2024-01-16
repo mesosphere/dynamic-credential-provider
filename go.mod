@@ -3,7 +3,7 @@
 
 module github.com/mesosphere/dynamic-credential-provider
 
-go 1.20
+go 1.21
 
 require (
 	github.com/distribution/distribution/v3 v3.0.0-20230519140516-983358f8e250
