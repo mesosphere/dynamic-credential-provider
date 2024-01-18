@@ -8,7 +8,7 @@ ifndef GORELEASER_CURRENT_TAG
 export GORELEASER_CURRENT_TAG=$(GIT_TAG)
 endif
 
-export CLOUD_PROVIDER_GCP_VERSION := master
+export CLOUD_PROVIDER_GCP_VERSION := ccm/v29.0.0
 
 .PHONY: build-snapshot
 build-snapshot: ## Builds a snapshot with goreleaser
