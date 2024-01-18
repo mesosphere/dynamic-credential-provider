@@ -2,6 +2,22 @@ apiVersion: v1
 entries:
   dynamic-credential-provider:
   - apiVersion: v2
+    appVersion: v0.5.0
+    created: "2024-01-18T12:14:29.110143373Z"
+    description: A Helm chart for Kubernetes dynamic credential provider
+    digest: e45fd4e509ad427059d26909bceb8f4edbc9020b117bb7a67d313f989e762884
+    maintainers:
+    - email: jimmidyson@gmail.com
+      name: jimmidyson
+      url: https://github.com/jimmidyson
+    name: dynamic-credential-provider
+    sources:
+    - https://github.com/mesosphere/dynamic-credential-provider
+    type: application
+    urls:
+    - https://mesosphere.github.io/dynamic-credential-provider/repo/dynamic-credential-provider-v0.5.0.tgz
+    version: v0.5.0
+  - apiVersion: v2
     appVersion: v0.4.2
     created: "2024-01-16T18:28:28.752922054Z"
     description: A Helm chart for Kubernetes dynamic credential provider
@@ -63,4 +79,4 @@ entries:
     urls:
     - https://mesosphere.github.io/dynamic-credential-provider/repo/dynamic-credential-provider-v0.1.2.tgz
     version: v0.1.2
-generated: "2024-01-16T18:28:28.752426878Z"
+generated: "2024-01-18T12:14:29.108901853Z"
