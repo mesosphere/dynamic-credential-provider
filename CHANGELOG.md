@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 (2024-01-18)
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
+### Exciting New Features 🎉
+* feat: Use latest ACR and GCR credential helpers by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/246
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.4.2...v0.5.0
+
 ## 0.4.2 (2024-01-16)
 
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
