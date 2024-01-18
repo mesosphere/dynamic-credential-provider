@@ -69,7 +69,8 @@ builds:
             - GOOS={{ .Os }}
             - GOARCH={{ .Arch }}
 upx:
-  - goos:
+  - enabled: "{{ not .IsSnapshot }}"
+    goos:
       - linux
     compress: "9"
     lzma: true
@@ -112,7 +113,7 @@ dockers:
       - "--build-arg=CLOUD_PROVIDER_GCP_VERSION={{.Env.CLOUD_PROVIDER_GCP_VERSION}}"
   - image_templates:
       # Specify the image tag including `-amd64v8` suffix if the build is not a snapshot build or is not being built on
-      # arm64 machine. This allows for using the snapshot image build without the archtecture specific suffix
+      # arm64 machine. This allows for using the snapshot image build without the architecture specific suffix
       # consistently on local machines, i.e. can always use `ghcr.io/mesosphere/dynamic-credential-provider:v<VERSION>` on the machine the snapshot
       # is built on.
       #
