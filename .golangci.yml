@@ -31,7 +31,6 @@ linters:
     - misspell
     - nolintlint
     - prealloc
-    - revive
     - staticcheck
     - stylecheck
     - tagliatelle

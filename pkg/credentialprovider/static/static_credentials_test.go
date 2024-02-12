@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
+	credentialproviderv1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
 
 	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/static"
 )
@@ -30,7 +30,7 @@ func TestGetCredentials(t *testing.T) {
 		name              string
 		in                string
 		credentialsString string
-		expectedOut       *v1.CredentialProviderResponse
+		expectedOut       *credentialproviderv1.CredentialProviderResponse
 		expectErr         bool
 	}{
 		{
@@ -93,15 +93,15 @@ func generateResponse(
 	duration time.Duration,
 	username string,
 	password string,
-) *v1.CredentialProviderResponse {
-	return &v1.CredentialProviderResponse{
+) *credentialproviderv1.CredentialProviderResponse {
+	return &credentialproviderv1.CredentialProviderResponse{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CredentialProviderResponse",
 			APIVersion: "credentialprovider.kubelet.k8s.io/v1",
 		},
-		CacheKeyType:  v1.RegistryPluginCacheKeyType,
+		CacheKeyType:  credentialproviderv1.RegistryPluginCacheKeyType,
 		CacheDuration: &metav1.Duration{Duration: duration},
-		Auth: map[string]v1.AuthConfig{
+		Auth: map[string]credentialproviderv1.AuthConfig{
 			registry: {
 				Username: username,
 				Password: password,

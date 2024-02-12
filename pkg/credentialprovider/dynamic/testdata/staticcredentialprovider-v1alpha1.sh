@@ -12,6 +12,6 @@ echo '{
   "cacheKeyType":"Image",
   "cacheDuration":"5s",
   "auth":{
-    "*.v1alpha1": {"username":"v1alpha1user","password":"v1alpha1password"}
+    "*.v1alpha1": {"username":"v1alpha1testuser","password":"v1alpha1testpassword"}
   }
 }'

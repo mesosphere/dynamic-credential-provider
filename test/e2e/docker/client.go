@@ -17,6 +17,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 )
 
@@ -207,7 +208,7 @@ func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
 }
 
 func authString(username, password string) string {
-	authConfig := types.AuthConfig{
+	authConfig := registry.AuthConfig{
 		Username: username,
 		Password: password,
 	}
