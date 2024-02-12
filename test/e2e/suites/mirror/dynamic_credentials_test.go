@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/sethvargo/go-password/password"
@@ -27,7 +27,7 @@ import (
 	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	applymetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cli-utils/pkg/kstatus/status"
 
 	"github.com/mesosphere/dynamic-credential-provider/test/e2e/docker"
@@ -80,11 +80,11 @@ var _ = Describe("Successful",
 					ctx,
 					&applycorev1.SecretApplyConfiguration{
 						TypeMetaApplyConfiguration: applymetav1.TypeMetaApplyConfiguration{
-							APIVersion: pointer.String(corev1.SchemeGroupVersion.String()),
-							Kind:       pointer.String("Secret"),
+							APIVersion: ptr.To(corev1.SchemeGroupVersion.String()),
+							Kind:       ptr.To("Secret"),
 						},
 						ObjectMetaApplyConfiguration: &applymetav1.ObjectMetaApplyConfiguration{
-							Name: pointer.String("dynamiccredentialproviderconfig"),
+							Name: ptr.To("dynamiccredentialproviderconfig"),
 						},
 						StringData: map[string]string{
 							"dynamic-credential-provider-config.yaml": buf.String(),
@@ -111,11 +111,11 @@ var _ = Describe("Successful",
 					ctx,
 					&applycorev1.SecretApplyConfiguration{
 						TypeMetaApplyConfiguration: applymetav1.TypeMetaApplyConfiguration{
-							APIVersion: pointer.String(corev1.SchemeGroupVersion.String()),
-							Kind:       pointer.String("Secret"),
+							APIVersion: ptr.To(corev1.SchemeGroupVersion.String()),
+							Kind:       ptr.To("Secret"),
 						},
 						ObjectMetaApplyConfiguration: &applymetav1.ObjectMetaApplyConfiguration{
-							Name: pointer.String("staticcredentialproviderauth"),
+							Name: ptr.To("staticcredentialproviderauth"),
 						},
 						StringData: map[string]string{
 							"static-image-credentials.json": buf.String(),
@@ -270,11 +270,11 @@ var _ = Describe("Successful",
 					ctx,
 					&applycorev1.SecretApplyConfiguration{
 						TypeMetaApplyConfiguration: applymetav1.TypeMetaApplyConfiguration{
-							APIVersion: pointer.String(corev1.SchemeGroupVersion.String()),
-							Kind:       pointer.String("Secret"),
+							APIVersion: ptr.To(corev1.SchemeGroupVersion.String()),
+							Kind:       ptr.To("Secret"),
 						},
 						ObjectMetaApplyConfiguration: &applymetav1.ObjectMetaApplyConfiguration{
-							Name: pointer.String("staticcredentialproviderauth"),
+							Name: ptr.To("staticcredentialproviderauth"),
 						},
 						StringData: map[string]string{
 							"static-image-credentials.json": buf.String(),
@@ -326,11 +326,11 @@ var _ = Describe("Successful",
 						ctx,
 						&applycorev1.SecretApplyConfiguration{
 							TypeMetaApplyConfiguration: applymetav1.TypeMetaApplyConfiguration{
-								APIVersion: pointer.String(corev1.SchemeGroupVersion.String()),
-								Kind:       pointer.String("Secret"),
+								APIVersion: ptr.To(corev1.SchemeGroupVersion.String()),
+								Kind:       ptr.To("Secret"),
 							},
 							ObjectMetaApplyConfiguration: &applymetav1.ObjectMetaApplyConfiguration{
-								Name: pointer.String("staticcredentialproviderauth"),
+								Name: ptr.To("staticcredentialproviderauth"),
 							},
 							StringData: map[string]string{
 								"static-image-credentials.json": buf.String(),
@@ -357,11 +357,11 @@ var _ = Describe("Successful",
 						ctx,
 						&applycorev1.SecretApplyConfiguration{
 							TypeMetaApplyConfiguration: applymetav1.TypeMetaApplyConfiguration{
-								APIVersion: pointer.String(corev1.SchemeGroupVersion.String()),
-								Kind:       pointer.String("Secret"),
+								APIVersion: ptr.To(corev1.SchemeGroupVersion.String()),
+								Kind:       ptr.To("Secret"),
 							},
 							ObjectMetaApplyConfiguration: &applymetav1.ObjectMetaApplyConfiguration{
-								Name: pointer.String("dynamiccredentialproviderconfig"),
+								Name: ptr.To("dynamiccredentialproviderconfig"),
 							},
 							StringData: map[string]string{
 								"dynamic-credential-provider-config.yaml": buf.String(),

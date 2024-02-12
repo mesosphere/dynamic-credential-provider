@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	credentialproviderv1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
 
 	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/dynamic"
@@ -26,6 +26,8 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 		dummyImageFmt                  = "img.%s/abc/def:v1.2.3"
 		mirrorUser                     = "mirroruser"
 		mirrorPassword                 = "mirrorpassword"
+		testUser                       = "testuser"
+		testPassword                   = "testpassword"
 		wildcardDomain                 = "*.*"
 		credentialProviderResponseKind = "CredentialProviderResponse" //nolint:gosec // No actual credentials here.
 	)
@@ -48,12 +50,12 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				cfgFile: filepath.Join("testdata", "config-with-mirror-only.yaml"),
 				img:     fmt.Sprintf(dummyImageFmt, v),
 				want: &credentialproviderv1.CredentialProviderResponse{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
 						Kind:       credentialProviderResponseKind,
 					},
 					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					CacheDuration: &metav1.Duration{Duration: expectedDummyDuration},
 					Auth: map[string]credentialproviderv1.AuthConfig{
 						fmt.Sprintf(dummyImageFmt, v): {
 							Username: mirrorUser,
@@ -67,20 +69,20 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				cfgFile: filepath.Join("testdata", "config-with-mirror-first.yaml"),
 				img:     fmt.Sprintf(dummyImageFmt, v),
 				want: &credentialproviderv1.CredentialProviderResponse{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
 						Kind:       credentialProviderResponseKind,
 					},
 					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					CacheDuration: &metav1.Duration{Duration: expectedDummyDuration},
 					Auth: map[string]credentialproviderv1.AuthConfig{
 						fmt.Sprintf(dummyImageFmt, v): {
 							Username: mirrorUser,
 							Password: mirrorPassword,
 						},
 						wildcardDomain: {
-							Username: v + "user",
-							Password: v + "password",
+							Username: v + testUser,
+							Password: v + testPassword,
 						},
 					},
 				},
@@ -90,20 +92,20 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				cfgFile: filepath.Join("testdata", "config-with-mirror-last.yaml"),
 				img:     fmt.Sprintf(dummyImageFmt, v),
 				want: &credentialproviderv1.CredentialProviderResponse{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
 						Kind:       credentialProviderResponseKind,
 					},
 					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					CacheDuration: &metav1.Duration{Duration: expectedDummyDuration},
 					Auth: map[string]credentialproviderv1.AuthConfig{
 						wildcardDomain: {
 							Username: mirrorUser,
 							Password: mirrorPassword,
 						},
 						fmt.Sprintf(dummyImageFmt, v): {
-							Username: v + "user",
-							Password: v + "password",
+							Username: v + testUser,
+							Password: v + testPassword,
 						},
 					},
 				},
@@ -113,12 +115,12 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				cfgFile: filepath.Join("testdata", "config-with-mirror-last.yaml"),
 				img:     "noorigin/image:v1.2.3.4",
 				want: &credentialproviderv1.CredentialProviderResponse{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
 						Kind:       credentialProviderResponseKind,
 					},
 					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					CacheDuration: &metav1.Duration{Duration: expectedDummyDuration},
 					Auth: map[string]credentialproviderv1.AuthConfig{
 						wildcardDomain: {Username: mirrorUser, Password: mirrorPassword},
 					},
@@ -129,16 +131,16 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				cfgFile: filepath.Join("testdata", "config-no-mirror.yaml"),
 				img:     fmt.Sprintf(dummyImageFmt, v),
 				want: &credentialproviderv1.CredentialProviderResponse{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
 						Kind:       credentialProviderResponseKind,
 					},
 					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					CacheDuration: &metav1.Duration{Duration: expectedDummyDuration},
 					Auth: map[string]credentialproviderv1.AuthConfig{
 						fmt.Sprintf(dummyImageFmt, v): {
-							Username: v + "user",
-							Password: v + "password",
+							Username: v + testUser,
+							Password: v + testPassword,
 						},
 					},
 				},
@@ -148,12 +150,12 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 				cfgFile: filepath.Join("testdata", "config-with-mirror-with-path-only.yaml"),
 				img:     fmt.Sprintf(dummyImageFmt, v),
 				want: &credentialproviderv1.CredentialProviderResponse{
-					TypeMeta: v1.TypeMeta{
+					TypeMeta: metav1.TypeMeta{
 						APIVersion: credentialproviderv1.SchemeGroupVersion.String(),
 						Kind:       credentialProviderResponseKind,
 					},
 					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
-					CacheDuration: &v1.Duration{Duration: expectedDummyDuration},
+					CacheDuration: &metav1.Duration{Duration: expectedDummyDuration},
 					Auth: map[string]credentialproviderv1.AuthConfig{
 						fmt.Sprintf(dummyImageFmt, v): {
 							Username: mirrorUser,

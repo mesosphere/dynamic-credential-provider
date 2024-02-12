@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
+	credentialproviderv1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
 )
 
 type fakePlugin struct{}
@@ -21,12 +21,12 @@ func (fakePlugin) GetCredentials(
 	_ context.Context,
 	_ string,
 	_ []string,
-) (*v1.CredentialProviderResponse, error) {
-	return &v1.CredentialProviderResponse{
-		CacheKeyType: v1.RegistryPluginCacheKeyType,
+) (*credentialproviderv1.CredentialProviderResponse, error) {
+	return &credentialproviderv1.CredentialProviderResponse{
+		CacheKeyType: credentialproviderv1.RegistryPluginCacheKeyType,
 		//nolint:revive // Dummy value in test file, no need for const.
 		CacheDuration: &metav1.Duration{Duration: 10 * time.Minute},
-		Auth: map[string]v1.AuthConfig{
+		Auth: map[string]credentialproviderv1.AuthConfig{
 			"*.registry.io": {
 				Username: "user",
 				Password: "password",
