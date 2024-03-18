@@ -20,7 +20,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: google-github-actions/release-please-action@v4.0
+      - uses: google-github-actions/release-please-action@v4.1
         id: release-please
 
       - if: ${{ steps.release-please.outputs.release_created }}
