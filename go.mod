@@ -12,7 +12,7 @@ require (
 	github.com/foomo/htpasswd v0.0.0-20200116085101-e3a90e78da9c
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/onsi/ginkgo/v2 v2.16.0
+	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.31.1
 	github.com/otiai10/copy v1.14.0
 	github.com/sethvargo/go-password v0.2.0
