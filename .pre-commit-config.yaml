@@ -17,7 +17,7 @@ repos:
   - id: go-mod-tidy-repo
     stages: [commit]
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
+  rev: v4.6.0
   hooks:
   - id: trailing-whitespace
     stages: [commit]
@@ -45,7 +45,7 @@ repos:
     stages: [commit]
     exclude: ^charts/.+/README.md$
 - repo: https://github.com/rhysd/actionlint
-  rev: v1.6.26
+  rev: v1.6.27
   hooks:
   - id: actionlint-system
     stages: [commit]
@@ -68,19 +68,19 @@ repos:
   - id: script-must-have-extension
     stages: [commit]
 - repo: https://github.com/shellcheck-py/shellcheck-py
-  rev: v0.9.0.6
+  rev: v0.10.0.1
   hooks:
   - id: shellcheck
     stages: [commit]
     args: ["-x"]
 - repo: https://github.com/igorshubovych/markdownlint-cli
-  rev: v0.38.0
+  rev: v0.39.0
   hooks:
   - id: markdownlint
     stages: [commit]
     exclude: ^(CHANGELOG.md|charts/.+/README.md)$
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.5.4
+  rev: v1.5.5
   hooks:
   - id: insert-license
     name: License headers - Go
@@ -114,7 +114,7 @@ repos:
       - <!--|| -->
       - --allow-past-years
 - repo: https://github.com/norwoodj/helm-docs
-  rev: v1.12.0
+  rev: v1.13.1
   hooks:
   - id: helm-docs
     stages: [commit]
