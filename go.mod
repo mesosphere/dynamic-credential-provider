@@ -5,6 +5,8 @@ module github.com/mesosphere/dynamic-credential-provider
 
 go 1.21
 
+toolchain go1.22.2
+
 require (
 	github.com/distribution/reference v0.6.0
 	github.com/docker/docker v25.0.1+incompatible
