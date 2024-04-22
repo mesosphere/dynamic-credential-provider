@@ -96,7 +96,7 @@ func RunContainerInBackground(
 	}
 	containerID := created.ID
 
-	if err := dClient.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
+	if err := dClient.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
 		//nolint:contextcheck // Best effort background deletion.
 		if deleteErr := ForceDeleteContainer(context.Background(), containerID); deleteErr != nil {
 			err = errors.Join(err, deleteErr)
@@ -127,7 +127,7 @@ func ForceDeleteContainer(ctx context.Context, containerID string) error {
 	err = dClient.ContainerRemove(
 		ctx,
 		containerID,
-		types.ContainerRemoveOptions{
+		container.RemoveOptions{
 			RemoveVolumes: true,
 			Force:         true,
 		},
