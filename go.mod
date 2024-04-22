@@ -3,7 +3,7 @@
 
 module github.com/mesosphere/dynamic-credential-provider
 
-go 1.21
+go 1.22
 
 toolchain go1.22.2
 
@@ -17,7 +17,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.33.0
 	github.com/otiai10/copy v1.14.0
-	github.com/sethvargo/go-password v0.2.0
+	github.com/sethvargo/go-password v0.3.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
