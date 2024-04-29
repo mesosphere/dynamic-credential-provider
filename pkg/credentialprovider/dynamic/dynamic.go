@@ -306,7 +306,7 @@ func (p *dynamicProvider) getCredentialsForImage(img string) (
 		}
 	}
 
-	return authConfig, cacheDuration, len(longestMatchedURL) > 0, nil
+	return authConfig, cacheDuration, longestMatchedURL != "", nil
 }
 
 func isRegistryCredentialsOnly(cfg *v1alpha1.MirrorConfig) bool {

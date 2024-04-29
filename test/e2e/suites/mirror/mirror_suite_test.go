@@ -254,9 +254,9 @@ func runPod(ctx context.Context, k8sClient kubernetes.Interface, image string) *
 		)
 	Expect(err).NotTo(HaveOccurred())
 
-	DeferCleanup(func(ctx SpecContext) {
+	DeferCleanup(func(specCtx SpecContext) { //nolint:contextcheck // Idiomatic cleanup context.
 		err := kindClusterClient.CoreV1().Pods(metav1.NamespaceDefault).
-			Delete(ctx, pod.GetName(), *metav1.NewDeleteOptions(0))
+			Delete(specCtx, pod.GetName(), *metav1.NewDeleteOptions(0))
 		Expect(err).NotTo(HaveOccurred())
 	}, NodeTimeout(time.Minute))
 
