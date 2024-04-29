@@ -124,9 +124,10 @@ endif
 .PHONY: lint.%
 lint.%: ## Runs golangci-lint for a specific module
 lint.%: ; $(info $(M) linting $* module)
-	$(if $(filter-out root,$*),cd $* && )find -name '*.go' ! -name 'zz_generated*.go' -exec golines -w {} \;
+	$(if $(filter-out root,$*),cd $* && )golines -w $$(go list ./... | sed "s|^$$(go list -m)|.|")
 	$(if $(filter-out root,$*),cd $* && )golangci-lint run --fix --config=$(GOLANGCI_CONFIG_FILE)
-	$(if $(filter-out root,$*),cd $* && )go fix ./...
+	$(if $(filter-out root,$*),cd $* && )golines -w $$(go list ./... | sed "s|^$$(go list -m)|.|")
+	#$(if $(filter-out root,$*),cd $* && )go fix ./...
 
 .PHONY: mod-tidy
 mod-tidy: ## Run go mod tidy for all modules
@@ -140,7 +141,7 @@ endif
 .PHONY: mod-tidy.%
 mod-tidy.%: ## Runs go mod tidy for a specific module
 mod-tidy.%: ; $(info $(M) running go mod tidy for $* module)
-	$(if $(filter-out root,$*),cd $* && )go mod tidy -v -compat=1.17
+	$(if $(filter-out root,$*),cd $* && )go mod tidy
 	$(if $(filter-out root,$*),cd $* && )go mod verify
 
 .PHONY: go-clean
@@ -161,7 +162,7 @@ go-clean.%: ; $(info $(M) running go clean for $* module)
 go-generate: ## Runs go generate
 go-generate: ; $(info $(M) running go generate)
 	go generate -x ./...
-	go fix ./...
+	#go fix ./...
 
 .PHONY: go-mod-upgrade
 go-mod-upgrade: ## Interactive check for direct module dependency upgrades
