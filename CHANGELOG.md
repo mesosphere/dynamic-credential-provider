@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.2 (2024-04-29)
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
+### Other Changes
+* build: Update all tools, pre-commit hooks, and GCP version by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/290
+* build(deps): Bump jetpack-io/devbox-install-action from 0.9.0 to 0.10.0 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/296
+* build(deps): Bump sigs.k8s.io/cloud-provider-azure from 1.29.3 to 1.30.0 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/295
+* build(deps): Bump github.com/docker/docker from 25.0.1+incompatible to 25.0.5+incompatible by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/294
+* build(deps): Bump github.com/onsi/ginkgo/v2 from 2.17.1 to 2.17.2 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/293
+* build(deps): Bump jetify-com/devbox-install-action from 0.9.0 to 0.10.0 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/297
+* build(deps): Bump the k8s group with 5 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/292
+* ci: New org for devbox-install-action by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/298
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.5.1...v0.5.2
+
 ## 0.5.1 (2024-04-17)
 
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
