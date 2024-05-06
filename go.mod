@@ -15,7 +15,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/onsi/ginkgo/v2 v2.17.2
-	github.com/onsi/gomega v1.33.0
+	github.com/onsi/gomega v1.33.1
 	github.com/otiai10/copy v1.14.0
 	github.com/sethvargo/go-password v0.3.0
 	github.com/sirupsen/logrus v1.9.3
