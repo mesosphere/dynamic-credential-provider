@@ -47,7 +47,8 @@ var _ = Describe("Successful",
 				Expect(
 					pod.Status.ContainerStatuses[0].State.Waiting.Message,
 				).To(HaveSuffix("not found"))
-			})
+			},
+		)
 
 		It("pull image from origin when it does not exist in mirror",
 			func(ctx SpecContext) {
@@ -61,7 +62,8 @@ var _ = Describe("Successful",
 					return objStatus(pod, scheme.Scheme)
 				}, time.Minute, time.Second).WithContext(ctx).
 					Should(Equal(status.CurrentStatus))
-			})
+			},
+		)
 
 		It("pull image that only exists in mirror using origin style address",
 			func(ctx SpecContext) {
@@ -90,7 +92,8 @@ var _ = Describe("Successful",
 					return objStatus(pod, scheme.Scheme)
 				}, time.Minute, time.Second).WithContext(ctx).
 					Should(Equal(status.CurrentStatus))
-			})
+			},
+		)
 
 		It("pull image that only exists in mirror using mirror address",
 			func(ctx SpecContext) {
@@ -120,5 +123,7 @@ var _ = Describe("Successful",
 					return objStatus(pod, scheme.Scheme)
 				}, time.Minute, time.Second).WithContext(ctx).
 					Should(Equal(status.CurrentStatus))
-			})
-	})
+			},
+		)
+	},
+)
