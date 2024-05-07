@@ -8,6 +8,7 @@ package mirror_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -175,8 +176,17 @@ var _ = SynchronizedBeforeSuite(
 
 		By("Setting up containerd mirror hosts configuration")
 		containerdMirrorHostsConfigDir := GinkgoT().TempDir()
+
+		containerdMirrorMirrorHostsConfigDir := filepath.Join(containerdMirrorHostsConfigDir, mirrorRegistry.Address())
+		Expect(copy.Copy(
+			mirrorRegistry.CACertFile(),
+			filepath.Join(containerdMirrorMirrorHostsConfigDir, "ca.crt"),
+		)).To(Succeed())
+
+		containerdMirrorDefaultHostsConfigDir := filepath.Join(containerdMirrorHostsConfigDir, "_default")
+		Expect(os.MkdirAll(containerdMirrorDefaultHostsConfigDir, 0o755)).To(Succeed())
 		templatedFile, err = os.Create(
-			filepath.Join(containerdMirrorHostsConfigDir, "hosts.toml"),
+			filepath.Join(containerdMirrorDefaultHostsConfigDir, "hosts.toml"),
 		)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(configTemplates.ExecuteTemplate(
@@ -184,7 +194,7 @@ var _ = SynchronizedBeforeSuite(
 			"hosts.yaml.tmpl",
 			containerdMirrorHostsConfigData{
 				MirrorAddress:    mirrorRegistry.Address(),
-				MirrorCACertPath: "/etc/containerd/mirror-registry-ca.pem",
+				MirrorCACertPath: fmt.Sprintf("/etc/containerd/certs.d/%s/ca.crt", mirrorRegistry.Address()),
 			},
 		)).To(Succeed())
 
@@ -196,15 +206,12 @@ var _ = SynchronizedBeforeSuite(
 					Role:  v1alpha4.ControlPlaneRole,
 					Image: "ghcr.io/mesosphere/kind-node:v1.30.0",
 					ExtraMounts: []v1alpha4.Mount{{
-						HostPath:      mirrorRegistry.CACertFile(),
-						ContainerPath: "/etc/containerd/mirror-registry-ca.pem",
-						Readonly:      true,
-					}, {
 						HostPath:      providerBinDir,
 						ContainerPath: "/etc/kubernetes/image-credential-provider/",
 					}, {
 						HostPath:      containerdMirrorHostsConfigDir,
-						ContainerPath: "/etc/containerd/certs.d/_default/",
+						ContainerPath: "/etc/containerd/certs.d/",
+						Readonly:      true,
 					}},
 				}},
 				KubeadmConfigPatches: []string{

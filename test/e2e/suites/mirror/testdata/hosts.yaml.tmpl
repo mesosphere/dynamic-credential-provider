@@ -1,6 +1,3 @@
 [host."{{ .MirrorAddress }}"]
   capabilities = ["pull", "resolve"]
   ca = "{{ .MirrorCACertPath }}"
-  # don't rely on Containerd to add the v2/ suffix
-  # there is a bug where it is added incorrectly for mirrors with a path
-  override_path = true
