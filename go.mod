@@ -9,7 +9,7 @@ toolchain go1.22.2
 
 require (
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v25.0.5+incompatible
+	github.com/docker/docker v26.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/foomo/htpasswd v0.0.0-20200116085101-e3a90e78da9c
 	github.com/fsnotify/fsnotify v1.7.0
@@ -110,6 +110,7 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
