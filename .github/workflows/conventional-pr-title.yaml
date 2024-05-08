@@ -7,13 +7,28 @@ on:
     types:
       - opened
       - edited
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   check:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - uses: amannn/action-semantic-pull-request@v5
+        with:
+          types: |
+            build
+            ci
+            docs
+            feat
+            fix
+            perf
+            refactor
+            release
+            revert
+            style
+            test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
