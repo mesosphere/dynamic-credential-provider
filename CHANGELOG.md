@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.3 (2024-05-08)
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
+### Fixes 🔧
+* fix: Set empty origin auth if no credentials configured  by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/306
+### Other Changes
+* build(deps): Bump sigs.k8s.io/cloud-provider-azure from 1.30.0 to 1.30.1 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/299
+* build(deps): Bump sigs.k8s.io/controller-runtime from 0.18.0 to 0.18.1 in the k8s group by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/300
+* build(deps): Bump github.com/onsi/gomega from 1.33.0 to 1.33.1 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/301
+* ci: Remove dependabot ignores for github.com/docker/{docker,cli} by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/302
+* build(deps): Bump sigs.k8s.io/controller-runtime from 0.18.1 to 0.18.2 in the k8s group by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/303
+* build(deps): Bump github.com/docker/docker from 25.0.5+incompatible to 26.1.1+incompatible by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/304
+* build(deps): Bump github.com/onsi/ginkgo/v2 from 2.17.2 to 2.17.3 by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/305
+* ci: Fix up release type for conventional PR and update job defaults by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/308
+* build: Use go1.22.3 toolchain to fix vulnerability by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/309
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.5.2...v0.5.3
+
 ## 0.5.2 (2024-04-29)
 
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
