@@ -13,12 +13,13 @@ permissions:
   packages: write
   pull-requests: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   release-please:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - uses: google-github-actions/release-please-action@v4.1
         id: release-please

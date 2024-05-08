@@ -7,11 +7,13 @@ on:
     types:
       - opened
       - edited
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   label:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - uses: bcoe/conventional-release-labels@v1

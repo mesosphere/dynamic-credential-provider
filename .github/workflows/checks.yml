@@ -17,12 +17,14 @@ permissions:
   contents: read
   pull-requests: write
 
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   unit-test:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -43,9 +45,6 @@ jobs:
 
   e2e-test:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -68,9 +67,6 @@ jobs:
 
   lint:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -96,9 +92,6 @@ jobs:
 
   generated:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -116,9 +109,6 @@ jobs:
 
   lint-gha:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -131,9 +121,6 @@ jobs:
 
   lint-dockerfile:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -146,9 +133,6 @@ jobs:
 
   pre-commit:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -173,9 +157,6 @@ jobs:
 
   lint-test-helm:
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@v4
