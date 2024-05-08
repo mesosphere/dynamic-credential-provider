@@ -301,7 +301,7 @@ var _ = Describe("Successful",
 					if len(pod.Status.ContainerStatuses) == 0 {
 						return ""
 					}
-					return pod.Status.ContainerStatuses[0].State.Waiting.Reason
+					return ptr.Deref(pod.Status.ContainerStatuses[0].State.Waiting, corev1.ContainerStateWaiting{}).Reason
 				}, time.Minute, time.Second).WithContext(ctx).
 					Should(Or(Equal("ErrImagePull"), Equal("ImagePullBackOff")))
 			})

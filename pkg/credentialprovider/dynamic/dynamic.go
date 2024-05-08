@@ -142,12 +142,9 @@ func (p *dynamicProvider) GetCredentials(
 		if err != nil {
 			return nil, fmt.Errorf("failed to get origin credentials: %w", err)
 		}
-	}
-
-	if originAuthFound {
 		authMap[img] = originAuthConfig
 
-		if !mirrorAuthFound || cacheDuration > originCacheDuration {
+		if originAuthFound && (!mirrorAuthFound || cacheDuration > originCacheDuration) {
 			cacheDuration = originCacheDuration
 		}
 	}

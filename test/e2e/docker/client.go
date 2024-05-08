@@ -17,6 +17,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 )
@@ -82,7 +83,7 @@ func RunContainerInBackground(
 		}
 	}
 
-	out, err := dClient.ImagePull(ctx, containerCfg.Image, types.ImagePullOptions{})
+	out, err := dClient.ImagePull(ctx, containerCfg.Image, image.PullOptions{})
 	defer func() { _ = out.Close() }()
 	if err != nil {
 		_, _ = io.Copy(os.Stderr, out)
@@ -161,7 +162,7 @@ func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
 		out, err := dClient.ImagePull(
 			ctx,
 			srcImage,
-			types.ImagePullOptions{RegistryAuth: authString(pullUsername, pullPassword)},
+			image.PullOptions{RegistryAuth: authString(pullUsername, pullPassword)},
 		)
 		defer func() {
 			if out != nil {
@@ -184,12 +185,12 @@ func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
 	if err := dClient.ImageTag(ctx, srcImage, destImage); err != nil {
 		return fmt.Errorf("failed to retag image: %w", err)
 	}
-	defer func() { _, _ = dClient.ImageRemove(ctx, destImage, types.ImageRemoveOptions{}) }()
+	defer func() { _, _ = dClient.ImageRemove(ctx, destImage, image.RemoveOptions{}) }()
 
 	out, err := dClient.ImagePush(
 		ctx,
 		destImage,
-		types.ImagePushOptions{RegistryAuth: authString(pushUsername, pushPassword)},
+		image.PushOptions{RegistryAuth: authString(pushUsername, pushPassword)},
 	)
 	defer func() {
 		if out != nil {

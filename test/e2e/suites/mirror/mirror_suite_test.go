@@ -90,6 +90,11 @@ type imageCredentialProviderConfigData struct {
 	MirrorAddress string
 }
 
+type containerdMirrorHostsConfigData struct {
+	MirrorAddress    string
+	MirrorCACertPath string
+}
+
 func testdataPath(f string) string {
 	return filepath.Join("testdata", f)
 }
@@ -169,39 +174,53 @@ var _ = SynchronizedBeforeSuite(
 			filepath.Join(providerBinDir, "static-credential-provider"),
 		)).To(Succeed())
 
+		By("Setting up containerd mirror hosts configuration")
+		containerdMirrorHostsConfigDir := GinkgoT().TempDir()
+
+		containerdMirrorMirrorHostsConfigDir := filepath.Join(containerdMirrorHostsConfigDir, mirrorRegistry.Address())
+		Expect(copy.Copy(
+			mirrorRegistry.CACertFile(),
+			filepath.Join(containerdMirrorMirrorHostsConfigDir, "ca.crt"),
+		)).To(Succeed())
+
+		containerdMirrorDefaultHostsConfigDir := filepath.Join(containerdMirrorHostsConfigDir, "_default")
+		Expect(os.MkdirAll(containerdMirrorDefaultHostsConfigDir, 0o755)).To(Succeed())
+		templatedFile, err = os.Create(
+			filepath.Join(containerdMirrorDefaultHostsConfigDir, "hosts.toml"),
+		)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(configTemplates.ExecuteTemplate(
+			templatedFile,
+			"hosts.yaml.tmpl",
+			containerdMirrorHostsConfigData{
+				MirrorAddress:    mirrorRegistry.Address(),
+				MirrorCACertPath: fmt.Sprintf("/etc/containerd/certs.d/%s/ca.crt", mirrorRegistry.Address()),
+			},
+		)).To(Succeed())
+
 		By("Starting KinD cluster")
 		kindCluster, kcName, kubeconfig, err := cluster.NewKinDCluster(
 			ctx,
 			&v1alpha4.Cluster{
+				Nodes: []v1alpha4.Node{{
+					Role:  v1alpha4.ControlPlaneRole,
+					Image: "ghcr.io/mesosphere/kind-node:v1.30.0",
+					ExtraMounts: []v1alpha4.Mount{{
+						HostPath:      providerBinDir,
+						ContainerPath: "/etc/kubernetes/image-credential-provider/",
+					}, {
+						HostPath:      containerdMirrorHostsConfigDir,
+						ContainerPath: "/etc/containerd/certs.d/",
+						Readonly:      true,
+					}},
+				}},
 				KubeadmConfigPatches: []string{
 					kubeadmInitPatchKubeletCredentialProviderExtraArgs,
 					kubeadmJoinPatchKubeletCredentialProviderExtraArgs,
 				},
-				Nodes: []v1alpha4.Node{{
-					Role:  v1alpha4.ControlPlaneRole,
-					Image: "ghcr.io/mesosphere/kind-node:v1.26.4",
-					ExtraMounts: []v1alpha4.Mount{{
-						HostPath:      mirrorRegistry.CACertFile(),
-						ContainerPath: "/etc/containerd/mirror-registry-ca.pem",
-						Readonly:      true,
-					}, {
-						HostPath:      providerBinDir,
-						ContainerPath: "/etc/kubernetes/image-credential-provider/",
-					}},
-				}},
 				ContainerdConfigPatches: []string{
-					fmt.Sprintf(
-						`[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-  endpoint = ["https://%[1]s"]
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors."k8s.gcr.io"]
-  endpoint = ["https://%[1]s"]
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors."*"]
-  endpoint = ["https://%[1]s"]
-[plugins."io.containerd.grpc.v1.cri".registry.configs."%[1]s".tls]
-  ca_file   = "/etc/containerd/mirror-registry-ca.pem"
-`,
-						mirrorRegistry.Address(),
-					),
+					`[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"`,
 				},
 			},
 		)

@@ -122,7 +122,8 @@ func Test_dynamicProvider_GetCredentials(t *testing.T) {
 					CacheKeyType:  credentialproviderv1.ImagePluginCacheKeyType,
 					CacheDuration: &metav1.Duration{Duration: expectedDummyDuration},
 					Auth: map[string]credentialproviderv1.AuthConfig{
-						wildcardDomain: {Username: mirrorUser, Password: mirrorPassword},
+						wildcardDomain:            {Username: mirrorUser, Password: mirrorPassword},
+						"noorigin/image:v1.2.3.4": {Username: "", Password: ""},
 					},
 				},
 			},

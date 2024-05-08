@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
+	"github.com/onsi/ginkgo/v2"
 	yaml "gopkg.in/yaml.v3"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,6 +78,8 @@ func NewKinDCluster(
 		"--config", cfgFile,
 		"--retain",
 	)
+	cmd.Stdout = ginkgo.GinkgoWriter
+	cmd.Stderr = ginkgo.GinkgoWriter
 
 	err = cmd.Run()
 	if err != nil {
