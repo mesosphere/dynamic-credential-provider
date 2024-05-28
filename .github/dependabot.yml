@@ -13,10 +13,13 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      k8s:
-        patterns:
-          - "k8s.io/*"
-          - "sigs.k8s.io/*"
+      all-go-mod-patch-and-minor:
+        patterns: [ "*" ]
+        update-types: [ "patch", "minor" ]
+    ignore:
+      # Ignore k8s modules major and minor as they are upgraded together with controller-runtime.
+    - dependency-name: "k8s.io/*"
+      update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
 
   - package-ecosystem: "gomod"
     directory: "/credential-providers"
