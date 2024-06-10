@@ -9,7 +9,7 @@ toolchain go1.22.3
 
 require (
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v26.1.3+incompatible
+	github.com/docker/docker v26.1.4+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/foomo/htpasswd v0.0.0-20200116085101-e3a90e78da9c
 	github.com/fsnotify/fsnotify v1.7.0
@@ -21,7 +21,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
-	go.etcd.io/etcd/client/pkg/v3 v3.5.13
+	go.etcd.io/etcd/client/pkg/v3 v3.5.14
 	golang.org/x/sync v0.7.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.15.1
@@ -32,7 +32,7 @@ require (
 	k8s.io/kubelet v0.30.1
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	sigs.k8s.io/cli-utils v0.36.0
-	sigs.k8s.io/controller-runtime v0.18.3
+	sigs.k8s.io/controller-runtime v0.18.4
 	sigs.k8s.io/kind v0.23.0
 )
 
