@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 )
@@ -63,13 +64,13 @@ func RunContainerInBackground(
 		_, err = dClient.NetworkInspect(
 			ctx,
 			hostCfg.NetworkMode.NetworkName(),
-			types.NetworkInspectOptions{},
+			network.InspectOptions{},
 		)
 		if client.IsErrNotFound(err) {
 			_, err = dClient.NetworkCreate(
 				ctx,
 				hostCfg.NetworkMode.NetworkName(),
-				types.NetworkCreate{
+				network.CreateOptions{
 					Driver: "bridge",
 					Options: map[string]string{
 						"com.docker.network.bridge.enable_ip_masquerade": "true",
