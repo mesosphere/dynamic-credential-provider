@@ -9,7 +9,7 @@ toolchain go1.22.3
 
 require (
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v27.0.0+incompatible
+	github.com/docker/docker v27.0.2+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/foomo/htpasswd v0.0.0-20200116085101-e3a90e78da9c
 	github.com/fsnotify/fsnotify v1.7.0
@@ -17,7 +17,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
 	github.com/otiai10/copy v1.14.0
-	github.com/sethvargo/go-password v0.3.0
+	github.com/sethvargo/go-password v0.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
