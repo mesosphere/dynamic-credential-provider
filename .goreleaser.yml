@@ -1,6 +1,8 @@
 # Copyright 2022 D2iQ, Inc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+version: 2
+
 project_name: dynamic-credential-provider
 
 changelog:
@@ -81,12 +83,10 @@ archives:
   - name_template: '{{ .ProjectName }}_v{{trimprefix .Version "v"}}_{{ .Os }}_{{ .Arch }}'
     builds:
       - dynamic-credential-provider
-    rlcp: true
   - name_template: 'static-credential-provider_v{{trimprefix .Version "v"}}_{{ .Os }}_{{ .Arch }}'
     id: static-credential-provider
     builds:
       - static-credential-provider
-    rlcp: true
 dockers:
   - image_templates:
       # Specify the image tag including `-amd64` suffix if the build is not a snapshot build or is not being built on
@@ -143,4 +143,4 @@ docker_manifests:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ incminor .Tag }}-dev"
+  version_template: "{{ incminor .Tag }}-dev"

@@ -11,6 +11,7 @@
     "gnused@latest",
     "go@latest",
     "gojq@latest",
+    "golangci-lint@latest",
     "golines@latest",
     "google-cloud-sdk@latest",
     "goreleaser@latest",
@@ -26,8 +27,6 @@
     "shfmt@latest",
     "upx@latest",
     "yamale@latest",
-    "yamllint@latest",
-    "path:./hack/flakes#golangci-lint",
-    "path:./hack/flakes#go-mod-upgrade"
+    "yamllint@latest"
   ]
 }
