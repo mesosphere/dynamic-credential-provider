@@ -3,7 +3,8 @@
 
 module github.com/mesosphere/dynamic-credential-provider/credential-providers
 
-go 1.22.5
+go 1.23.1
+
 require (
 	k8s.io/cloud-provider-aws v1.31.0
 	sigs.k8s.io/cloud-provider-azure v1.31.1
