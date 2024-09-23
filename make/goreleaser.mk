@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 GORELEASER_PARALLELISM ?= $(shell nproc --ignore=1)
-GORELEASER_DEBUG ?= false
+GORELEASER_VERBOSE ?= false
 
 ifndef GORELEASER_CURRENT_TAG
 export GORELEASER_CURRENT_TAG=$(GIT_TAG)
@@ -13,7 +13,7 @@ export CLOUD_PROVIDER_GCP_VERSION := ccm/v29.0.0
 .PHONY: build-snapshot
 build-snapshot: ## Builds a snapshot with goreleaser
 build-snapshot: ; $(info $(M) building snapshot $*)
-	goreleaser --debug=$(GORELEASER_DEBUG) \
+	goreleaser --verbose=$(GORELEASER_VERBOSE) \
 		build \
 		--snapshot \
 		--clean \
@@ -23,7 +23,7 @@ build-snapshot: ; $(info $(M) building snapshot $*)
 .PHONY: release
 release: ## Builds a release with goreleaser
 release: ; $(info $(M) building release $*)
-	goreleaser --debug=$(GORELEASER_DEBUG) \
+	goreleaser --verbose=$(GORELEASER_VERBOSE) \
 		release \
 		--clean \
 		--parallelism=$(GORELEASER_PARALLELISM) \
@@ -32,7 +32,7 @@ release: ; $(info $(M) building release $*)
 .PHONY: release-snapshot
 release-snapshot: ## Builds a snapshot release with goreleaser
 release-snapshot: ; $(info $(M) building snapshot release $*)
-	goreleaser --debug=$(GORELEASER_DEBUG) \
+	goreleaser --verbose=$(GORELEASER_VERBOSE) \
 		release \
 		--snapshot \
 		--clean \

@@ -162,9 +162,4 @@ go-clean.%: ; $(info $(M) running go clean for $* module)
 go-generate: ## Runs go generate
 go-generate: ; $(info $(M) running go generate)
 	go generate -x ./...
-	#go fix ./...
-
-.PHONY: go-mod-upgrade
-go-mod-upgrade: ## Interactive check for direct module dependency upgrades
-go-mod-upgrade: ; $(info $(M) checking for direct module dependency upgrades)
-	go-mod-upgrade
+	go fix ./...
