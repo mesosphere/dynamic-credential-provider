@@ -8,6 +8,7 @@
     "crane@latest",
     "findutils@latest",
     "ginkgo@latest",
+    "gnumake@latest",
     "gnused@latest",
     "go@latest",
     "gojq@latest",
