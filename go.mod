@@ -32,7 +32,7 @@ require (
 	k8s.io/kubelet v0.30.8
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 	sigs.k8s.io/cli-utils v0.37.2
-	sigs.k8s.io/controller-runtime v0.19.3
+	sigs.k8s.io/controller-runtime v0.19.4
 	sigs.k8s.io/kind v0.26.0
 )
 
