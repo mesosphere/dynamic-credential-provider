@@ -151,7 +151,7 @@ func (p *dynamicProvider) GetCredentials(
 
 	if p.cfg.Mirror != nil && mirrorAuthFound {
 		err := updateAuthConfigMapForMirror(
-			authMap, img, p.cfg.Mirror.MirrorCredentialsStrategy, mirrorAuthConfig,
+			authMap, img, p.cfg.Mirror.CredentialsStrategy, mirrorAuthConfig,
 		)
 		if err != nil {
 			return nil, err
@@ -308,5 +308,5 @@ func (p *dynamicProvider) getCredentialsForImage(img string) (
 
 func isRegistryCredentialsOnly(cfg *v1alpha1.MirrorConfig) bool {
 	return cfg != nil &&
-		cfg.MirrorCredentialsStrategy == v1alpha1.MirrorCredentialsOnly
+		cfg.CredentialsStrategy == v1alpha1.MirrorCredentialsOnly
 }

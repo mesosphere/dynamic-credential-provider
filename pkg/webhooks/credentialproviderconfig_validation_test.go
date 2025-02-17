@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package webhooks
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -207,7 +208,7 @@ func Test_validateCredentialProviderConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			errs := validateCredentialProviderConfig(tt.config, &field.Path{})
+			errs := validateCredentialProviderConfig(context.Background(), tt.config, &field.Path{})
 
 			if tt.shouldErr && len(errs) == 0 {
 				t.Errorf("expected error but got none")

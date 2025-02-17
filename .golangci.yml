@@ -32,13 +32,13 @@ linters:
     - staticcheck
     - stylecheck
     - tagliatelle
-    - tenv
     - thelper
     - tparallel
     - typecheck
     - unconvert
     - unparam
     - unused
+    - usetesting
     - whitespace
 
 linters-settings:
