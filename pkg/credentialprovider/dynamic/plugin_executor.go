@@ -22,7 +22,7 @@ import (
 	kubeletconfigv1 "k8s.io/kubelet/config/v1"
 	credentialproviderapi "k8s.io/kubelet/pkg/apis/credentialprovider"
 
-	"github.com/mesosphere/dynamic-credential-provider/apis/config/v1alpha1"
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/dynamic/apiversions"
 	"github.com/mesosphere/dynamic-credential-provider/pkg/log"
 	"github.com/mesosphere/dynamic-credential-provider/pkg/urlglobber"
 )
@@ -38,7 +38,7 @@ func newPluginProvider(
 		return nil, fmt.Errorf("unsupported media type %q", mediaType)
 	}
 
-	gv, ok := v1alpha1.APIVersions[provider.APIVersion]
+	gv, ok := apiversions.APIVersions()[provider.APIVersion]
 	if !ok {
 		return nil, fmt.Errorf("invalid apiVersion: %q", provider.APIVersion)
 	}

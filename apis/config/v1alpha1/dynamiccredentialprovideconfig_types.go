@@ -4,7 +4,6 @@
 package v1alpha1
 
 //go:generate controller-gen object paths=.
-//go:generate bash -ec "cd ../../.. && defaulter-gen -h hack/boilerplate.go.txt -i ./apis/config/v1alpha1 -o ../../../"
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +38,7 @@ type DynamicCredentialProviderConfig struct {
 
 // MirrorCredentialsStrategy specifies how to handle mirror registry credentials.
 // +kubebuilder:validation:Enum=MirrorCredentialsOnly;MirrorCredentialsFirst;MirrorCredentialsLast
+// +kubebuilder:validation:Default=MirrorCredentialsOnly
 type MirrorCredentialsStrategy string
 
 //nolint:gosec // No credentials here.
@@ -63,8 +63,5 @@ type MirrorConfig struct {
 	// with host specified. The scheme, host and path from the endpoint URL will be used.
 	Endpoint string `json:"endpoint"`
 	// CredentialStrategy specifies what strategy to employ when returning registry credentials.
-	// Defaults to `MirrorCredentialsOnly`.
-	// +optional
-	//nolint:tagliatelle // Prevents stuttering.
-	MirrorCredentialsStrategy MirrorCredentialsStrategy `json:"credentialsStrategy"`
+	CredentialsStrategy MirrorCredentialsStrategy `json:"credentialsStrategy"`
 }

@@ -14,33 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package webhooks
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	kubeletconfigv1 "k8s.io/kubelet/config/v1"
-	credentialproviderv1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1"
-	credentialproviderv1alpha1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1alpha1"
-	credentialproviderv1beta1 "k8s.io/kubelet/pkg/apis/credentialprovider/v1beta1"
 
+	"github.com/mesosphere/dynamic-credential-provider/pkg/credentialprovider/dynamic/apiversions"
 	"github.com/mesosphere/dynamic-credential-provider/pkg/urlglobber"
 )
-
-var APIVersions = map[string]schema.GroupVersion{
-	credentialproviderv1alpha1.SchemeGroupVersion.String(): credentialproviderv1alpha1.SchemeGroupVersion,
-	credentialproviderv1beta1.SchemeGroupVersion.String():  credentialproviderv1beta1.SchemeGroupVersion,
-	credentialproviderv1.SchemeGroupVersion.String():       credentialproviderv1.SchemeGroupVersion,
-}
 
 // validateCredentialProviderConfig validates CredentialProviderConfig.
 // Copied from https://github.com/kubernetes/kubernetes/blob/v1.25.4/pkg/credentialprovider/plugin/config.go#L72-L128.
 //
 //nolint:revive // This is copied as is from upstream so not refactored to reduce cyclomatic complexity.
 func validateCredentialProviderConfig(
+	_ context.Context,
 	config *kubeletconfigv1.CredentialProviderConfig,
 	rootPath *field.Path,
 ) field.ErrorList {
@@ -107,9 +100,9 @@ func validateCredentialProviderConfig(
 				allErrs,
 				field.Required(providerFieldPath.Child("apiVersion"), "apiVersion is required"),
 			)
-		} else if _, ok := APIVersions[provider.APIVersion]; !ok {
+		} else if _, ok := apiversions.APIVersions()[provider.APIVersion]; !ok {
 			validAPIVersions := []string{}
-			for apiVersion := range APIVersions {
+			for apiVersion := range apiversions.APIVersions() {
 				validAPIVersions = append(validAPIVersions, apiVersion)
 			}
 
