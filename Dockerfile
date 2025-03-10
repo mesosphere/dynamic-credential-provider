@@ -27,15 +27,14 @@ RUN --mount=type=bind,src=credential-providers,target=/go/src/credential-provide
         -o /go/bin/acr-credential-provider \
         sigs.k8s.io/cloud-provider-azure/cmd/acr-credential-provider
 
-ARG CLOUD_PROVIDER_GCP_VERSION
-RUN --mount=type=cache,target=/go/pkg/mod \
+# hadolint ignore=DL3059
+RUN --mount=type=bind,src=credential-providers,target=/go/src/credential-providers \
+    --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    git clone --depth 1 --branch ${CLOUD_PROVIDER_GCP_VERSION} --single-branch \
-        https://github.com/kubernetes/cloud-provider-gcp /go/src/credential-providers && \
     CGO_ENABLED=0 GOARCH=${TARGETARCH} \
         go build -trimpath -ldflags="-s -w" \
         -o /go/bin/gcr-credential-provider \
-        ./cmd/auth-provider-gcp
+        k8s.io/cloud-provider-gcp/cmd/auth-provider-gcp
 
 # hadolint ignore=DL3029
 FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:931e1a0e48addb212ec22efc21dc63a71568a1a5609764cb587f1e383b350f28 as linux-amd64

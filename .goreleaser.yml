@@ -110,7 +110,6 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--build-arg=GO_VERSION={{.Env.GO_VERSION}}"
-      - "--build-arg=CLOUD_PROVIDER_GCP_VERSION={{.Env.CLOUD_PROVIDER_GCP_VERSION}}"
   - image_templates:
       # Specify the image tag including `-amd64v8` suffix if the build is not a snapshot build or is not being built on
       # arm64 machine. This allows for using the snapshot image build without the architecture specific suffix
@@ -134,7 +133,6 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--build-arg=GO_VERSION={{.Env.GO_VERSION}}"
-      - "--build-arg=CLOUD_PROVIDER_GCP_VERSION={{.Env.CLOUD_PROVIDER_GCP_VERSION}}"
 docker_manifests:
   - name_template: ghcr.io/mesosphere/dynamic-credential-provider:v{{trimprefix .Version "v"}}
     image_templates:
