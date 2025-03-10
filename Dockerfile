@@ -37,9 +37,9 @@ RUN --mount=type=bind,src=credential-providers,target=/go/src/credential-provide
         k8s.io/cloud-provider-gcp/cmd/auth-provider-gcp
 
 # hadolint ignore=DL3029
-FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:931e1a0e48addb212ec22efc21dc63a71568a1a5609764cb587f1e383b350f28 as linux-amd64
+FROM --platform=linux/amd64 gcr.io/distroless/static@sha256:e855cfad87387db4658f58f72e09f243bdb58f0697e0535d371092d8c03dfd82 as linux-amd64
 # hadolint ignore=DL3029
-FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:077acdf091bcc6faa7bec809f46c2f8ddbfb311613ca2ccd266342b9d8711530 as linux-arm64
+FROM --platform=linux/arm64 gcr.io/distroless/static@sha256:27a586a3bf6339aad15f4fd6048e6c6381f76a18d971c1c5a5e691e1fb59b880 as linux-arm64
 
 # hadolint ignore=DL3006,DL3029
 FROM --platform=linux/${TARGETARCH} linux-${TARGETARCH}
