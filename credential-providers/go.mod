@@ -8,7 +8,7 @@ go 1.23.2
 toolchain go1.24.0
 
 require (
-	k8s.io/cloud-provider-aws v1.32.1
+	k8s.io/cloud-provider-aws v1.32.2
 	sigs.k8s.io/cloud-provider-azure v1.32.3
 )
 
