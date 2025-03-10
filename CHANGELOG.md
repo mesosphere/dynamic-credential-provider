@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.0 (2025-03-10)
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
+### Exciting New Features 🎉
+* feat: GCP auth provider v0.1.0 by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/387
+* feat: Update base image by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/388
+### Other Changes
+* build(deps): Bump the all-go-mod-patch-and-minor group with 3 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/380
+* build(deps): Bump github.com/docker/docker from 27.5.1+incompatible to 28.0.0+incompatible by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/381
+* build(deps): Bump the all-go-mod-patch-and-minor group across 1 directory with 5 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/386
+* build(deps): Bump sigs.k8s.io/cloud-provider-azure from 1.32.0 to 1.32.3 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/385
+* build(deps): Bump k8s.io/cloud-provider-aws from 1.32.1 to 1.32.2 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/383
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.6.0...v0.7.0
+
 ## 0.6.0 (2025-02-17)
 
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
