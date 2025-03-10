@@ -15,7 +15,6 @@ import (
 	"os"
 	"sync"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
@@ -54,10 +53,10 @@ func RunContainerInBackground(
 	containerCfg *container.Config,
 	hostCfg *container.HostConfig,
 	pullUsername, pullPassword string,
-) (types.ContainerJSON, error) {
+) (container.InspectResponse, error) {
 	dClient, err := ClientFromEnv()
 	if err != nil {
-		return types.ContainerJSON{}, fmt.Errorf("failed to create Docker client: %w", err)
+		return container.InspectResponse{}, fmt.Errorf("failed to create Docker client: %w", err)
 	}
 
 	if hostCfg.NetworkMode.IsUserDefined() {
@@ -80,7 +79,10 @@ func RunContainerInBackground(
 			)
 		}
 		if err != nil {
-			return types.ContainerJSON{}, fmt.Errorf("failed to create Docker network: %w", err)
+			return container.InspectResponse{}, fmt.Errorf(
+				"failed to create Docker network: %w",
+				err,
+			)
 		}
 	}
 
@@ -88,13 +90,13 @@ func RunContainerInBackground(
 	defer func() { _ = out.Close() }()
 	if err != nil {
 		_, _ = io.Copy(os.Stderr, out)
-		return types.ContainerJSON{}, fmt.Errorf("failed to pull Docker image: %w", err)
+		return container.InspectResponse{}, fmt.Errorf("failed to pull Docker image: %w", err)
 	}
 	_, _ = io.Copy(io.Discard, out)
 
 	created, err := dClient.ContainerCreate(ctx, containerCfg, hostCfg, nil, nil, containerName)
 	if err != nil {
-		return types.ContainerJSON{}, fmt.Errorf("failed to create container: %w", err)
+		return container.InspectResponse{}, fmt.Errorf("failed to create container: %w", err)
 	}
 	containerID := created.ID
 
@@ -103,7 +105,7 @@ func RunContainerInBackground(
 		if deleteErr := ForceDeleteContainer(context.Background(), containerID); deleteErr != nil {
 			err = errors.Join(err, deleteErr)
 		}
-		return types.ContainerJSON{}, fmt.Errorf("failed to start Docker container: %w", err)
+		return container.InspectResponse{}, fmt.Errorf("failed to start Docker container: %w", err)
 	}
 
 	containerInspect, err := dClient.ContainerInspect(ctx, containerID)
@@ -112,7 +114,7 @@ func RunContainerInBackground(
 		if deleteErr := ForceDeleteContainer(context.Background(), containerID); deleteErr != nil {
 			err = errors.Join(err, deleteErr)
 		}
-		return types.ContainerJSON{}, fmt.Errorf(
+		return container.InspectResponse{}, fmt.Errorf(
 			"failed to inspect started Docker container: %w",
 			err,
 		)
@@ -151,7 +153,7 @@ func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
 		return err
 	}
 
-	_, _, err = dClient.ImageInspectWithRaw(
+	_, err = dClient.ImageInspect(
 		ctx,
 		srcImage,
 	)

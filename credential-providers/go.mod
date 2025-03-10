@@ -5,10 +5,13 @@ module github.com/mesosphere/dynamic-credential-provider/credential-providers
 
 go 1.23.2
 
-toolchain go1.24.0
+toolchain go1.24.1
+
+replace k8s.io/cloud-provider-gcp/providers => k8s.io/cloud-provider-gcp/providers v0.28.3-0.20250109201832-30a7574edecf
 
 require (
 	k8s.io/cloud-provider-aws v1.32.2
+	k8s.io/cloud-provider-gcp v0.0.0-20250109201832-30a7574edecf
 	sigs.k8s.io/cloud-provider-azure v1.32.3
 )
 
@@ -104,6 +107,8 @@ require (
 	k8s.io/api v0.32.2 // indirect
 	k8s.io/apimachinery v0.32.2 // indirect
 	k8s.io/client-go v0.32.2 // indirect
+	k8s.io/cloud-provider v0.32.2 // indirect
+	k8s.io/cloud-provider-gcp/providers v0.0.0-00010101000000-000000000000 // indirect
 	k8s.io/component-base v0.32.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
