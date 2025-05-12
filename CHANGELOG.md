@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.7.0 (2025-05-12)
+
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
+### Exciting New Features 🎉
+* feat: GCP auth provider v0.1.0 by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/387
+* feat: Update base image by @jimmidyson in https://github.com/mesosphere/dynamic-credential-provider/pull/388
+### Other Changes
+* build(deps): Bump the all-go-mod-patch-and-minor group with 3 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/380
+* build(deps): Bump github.com/docker/docker from 27.5.1+incompatible to 28.0.0+incompatible by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/381
+* build(deps): Bump the all-go-mod-patch-and-minor group across 1 directory with 5 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/386
+* build(deps): Bump sigs.k8s.io/cloud-provider-azure from 1.32.0 to 1.32.3 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/385
+* build(deps): Bump k8s.io/cloud-provider-aws from 1.32.1 to 1.32.2 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/383
+* build(deps): Bump golang.org/x/net from 0.35.0 to 0.36.0 in the go_modules group by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/389
+* build(deps): Bump the all-go-mod-patch-and-minor group with 5 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/390
+* build(deps): Bump github.com/containerd/containerd from 1.7.24 to 1.7.27 in the go_modules group by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/391
+* build(deps): Bump the all-go-mod-patch-and-minor group with 4 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/393
+* build(deps): Bump github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 in /credential-providers in the go_modules group by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/392
+* build(deps): Bump the all-go-mod-patch-and-minor group with 3 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/394
+* build(deps): Bump the all-go-mod-patch-and-minor group with 4 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/395
+* build(deps): Bump sigs.k8s.io/cloud-provider-azure from 1.32.3 to 1.32.4 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/399
+* build(deps): Bump the all-go-mod-patch-and-minor group with 2 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/398
+* build(deps): Bump golang.org/x/net from 0.37.0 to 0.38.0 in /credential-providers in the go_modules group by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/397
+* build(deps): Bump the all-go-mod-patch-and-minor group with 4 updates by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/400
+* build(deps): Bump golang.org/x/sync from 0.13.0 to 0.14.0 in the all-go-mod-patch-and-minor group by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/403
+* build(deps): Bump sigs.k8s.io/cloud-provider-azure from 1.32.4 to 1.33.0 in /credential-providers by @dependabot in https://github.com/mesosphere/dynamic-credential-provider/pull/402
+
+
+**Full Changelog**: https://github.com/mesosphere/dynamic-credential-provider/compare/v0.6.0...v0.7.0
+
 ## 0.6.0 (2025-02-17)
 
 <!-- Release notes generated using configuration in .github/release.yaml at main -->
