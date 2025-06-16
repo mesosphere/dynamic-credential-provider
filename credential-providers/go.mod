@@ -12,7 +12,7 @@ replace k8s.io/cloud-provider-gcp/providers => k8s.io/cloud-provider-gcp/provide
 require (
 	k8s.io/cloud-provider-aws v1.32.2
 	k8s.io/cloud-provider-gcp v0.0.0-20250109201832-30a7574edecf
-	sigs.k8s.io/cloud-provider-azure v1.33.0
+	sigs.k8s.io/cloud-provider-azure v1.33.1
 )
 
 require (
@@ -94,7 +94,7 @@ require (
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
@@ -110,8 +110,8 @@ require (
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/kubelet v0.33.0 // indirect
 	k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e // indirect
-	sigs.k8s.io/cloud-provider-azure/pkg/azclient v0.6.2 // indirect
-	sigs.k8s.io/cloud-provider-azure/pkg/azclient/configloader v0.5.3 // indirect
+	sigs.k8s.io/cloud-provider-azure/pkg/azclient v0.8.0 // indirect
+	sigs.k8s.io/cloud-provider-azure/pkg/azclient/configloader v0.6.1 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
