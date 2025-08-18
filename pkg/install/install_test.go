@@ -39,9 +39,9 @@ func assertFileHashesEqual(t *testing.T, a, b string) {
 	t.Helper()
 
 	aHash, err := hashFile(a)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bHash, err := hashFile(b)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, aHash, bHash)
 }
@@ -50,9 +50,9 @@ func assertFileHashesDifferent(t *testing.T, a, b string) {
 	t.Helper()
 
 	aHash, err := hashFile(a)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bHash, err := hashFile(b)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.NotEqual(t, aHash, bHash)
 }
@@ -73,9 +73,9 @@ func TestSuccessfulCopy(t *testing.T) {
 		assert.FileExists(t, expectedFile)
 		srcFile := filepath.Join("testdata", f.Name())
 		srcFileStat, err := os.Stat(srcFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedFileStat, err := os.Stat(expectedFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, srcFileStat.Mode(), expectedFileStat.Mode())
 		assertFileHashesEqual(t, srcFile, expectedFile)
 	}
@@ -98,9 +98,9 @@ func TestSuccessfulCopyNonExistentTarget(t *testing.T) {
 		assert.FileExists(t, expectedFile)
 		srcFile := filepath.Join("testdata", f.Name())
 		srcFileStat, err := os.Stat(srcFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedFileStat, err := os.Stat(expectedFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, srcFileStat.Mode(), expectedFileStat.Mode())
 		assertFileHashesEqual(t, srcFile, expectedFile)
 	}
@@ -131,9 +131,9 @@ func TestSuccessfulCopySkipFile(t *testing.T) {
 		assert.FileExists(t, destFile)
 		srcFile := filepath.Join("testdata", f.Name())
 		srcFileStat, err := os.Stat(srcFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedFileStat, err := os.Stat(destFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, srcFileStat.Mode(), expectedFileStat.Mode())
 		assertFileHashesEqual(t, srcFile, destFile)
 	}
@@ -146,7 +146,7 @@ func TestSuccessfulCopyDoNotUpdate(t *testing.T) {
 	t.Setenv(install.CredentialProviderTargetDirEnvVar, tmpDir)
 	t.Setenv(install.UpdateCredentialProviderBinariesEnvVar, "false")
 
-	assert.NoError(
+	require.NoError(
 		t,
 		//nolint:revive // Dummy value in test file, no need for const.
 		os.WriteFile(filepath.Join(tmpDir, "dummybinary2"), []byte("differentcontent"), 0o600),
@@ -169,9 +169,9 @@ func TestSuccessfulCopyDoNotUpdate(t *testing.T) {
 		}
 
 		srcFileStat, err := os.Stat(srcFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedFileStat, err := os.Stat(expectedFile)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, srcFileStat.Mode(), expectedFileStat.Mode())
 		assertFileHashesEqual(t, srcFile, expectedFile)
 	}

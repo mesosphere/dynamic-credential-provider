@@ -1,125 +1,168 @@
 # Copyright 2022 D2iQ, Inc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+version: "2"
 run:
-  timeout: 5m
   build-tags:
     - "e2e"
-
 linters:
-  disable-all: true
+  default: none
   enable:
+    - asciicheck
+    - bidichk
+    - bodyclose
     - containedctx
     - contextcheck
+    - copyloopvar
+    - decorder
     - depguard
+    - dogsled
+    - durationcheck
     - errcheck
     - errchkjson
     - errname
+    - errorlint
+    - exhaustive
+    - ginkgolinter
+    - gocheckcompilerdirectives
     - gochecknoinits
-    - gci
+    - gochecksumtype
     - goconst
     - gocritic
+    - gocyclo
     - godot
-    - gofumpt
+    - gomoddirectives
     - gosec
-    - gosimple
     - govet
     - ineffassign
+    - interfacebloat
+    - intrange
     - lll
+    - loggercheck
+    - mirror
     - misspell
+    - musttag
+    - nestif
+    - nilerr
     - nolintlint
+    - nosprintfhostport
     - prealloc
+    - reassign
     - staticcheck
-    - stylecheck
     - tagliatelle
+    - testableexamples
+    - testifylint
     - thelper
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
+    - usestdlibvars
     - usetesting
     - whitespace
-
-linters-settings:
-  depguard:
-    rules:
-      main:
-        deny:
-          - pkg: k8s.io/kubernetes
-            desc: "Do not use k8s.io/kubernetes directly"
-  errcheck:
-    exclude-functions:
-      - encoding/json.Marshal
-      - encoding/json.MarshalIndent
-  errchkjson:
-    check-error-free-encoding: true
-  gci:
-    sections:
-      - Standard
-      - Default
-      - Prefix(github.com/mesosphere)
-      - Prefix(github.com/mesosphere/dynamic-credential-provider)
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-  gofumpt:
-    extra-rules: true
-  lll:
-    line-length: 120
-  revive:
-    enable-all-rules: true
-    ignore-generated-header: true
-    max-open-files: 2048
-    severity: error
-    rules:
-      - name: add-constant
-        arguments:
-          - maxLitCount: "3"
-            allowStrs: '"","testdata"'
-            allowInts: "0,1,2"
-            allowFloats: "0.0,0.,1.0,1.,2.0,2."
-      - name: argument-limit
-        arguments: [4]
-      - name: comment-spacings
-        arguments:
-          - nolint
-      - name: cognitive-complexity
-        disabled: true
-      - name: function-length
-        arguments: [30, 0]
-      - name: max-public-structs
-        arguments: [10]
-      - name: file-header
-        disabled: true
-      - name: line-length-limit
-        disabled: true
-      - name: banned-characters
-        disabled: true
-      - name: cyclomatic
-        arguments: [10]
-      - name: function-result-limit
-        arguments: [4]
-  tagliatelle:
-    case:
-      use-field-name: true
+  settings:
+    depguard:
       rules:
-        json: camel
-
-issues:
-  exclude-files:
-    - "^zz_generated.*"
-  exclude-rules:
-    # ignore errcheck for code under a /test folder
-    - path: "test/*"
-      linters:
-        - errcheck
-    # ignore errcheck for flags.Parse (it is expected that we flag.ExitOnError)
-    # ignore response.WriteError as it always returns the err it was passed
-    - source: "flags.Parse|response.WriteError"
-      linters:
-        - errcheck
+        main:
+          deny:
+            - pkg: k8s.io/kubernetes
+              desc: Do not use k8s.io/kubernetes directly
+    errcheck:
+      exclude-functions:
+        - encoding/json.Marshal
+        - encoding/json.MarshalIndent
+    errchkjson:
+      check-error-free-encoding: true
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    lll:
+      line-length: 120
+    revive:
+      max-open-files: 2048
+      severity: error
+      enable-all-rules: true
+      rules:
+        - name: add-constant
+          arguments:
+            - allowFloats: 0.0,0.,1.0,1.,2.0,2.
+              allowInts: 0,1,2
+              allowStrs: '"","testdata"'
+              maxLitCount: "3"
+        - name: argument-limit
+          arguments:
+            - 4
+        - name: comment-spacings
+          arguments:
+            - nolint
+        - name: cognitive-complexity
+          disabled: true
+        - name: function-length
+          arguments:
+            - 30
+            - 0
+        - name: max-public-structs
+          arguments:
+            - 10
+        - name: file-header
+          disabled: true
+        - name: line-length-limit
+          disabled: true
+        - name: banned-characters
+          disabled: true
+        - name: cyclomatic
+          arguments:
+            - 10
+        - name: function-result-limit
+          arguments:
+            - 4
+    tagliatelle:
+      case:
+        rules:
+          json: camel
+        use-field-name: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+        path: test/*
+      - linters:
+          - errcheck
+        source: flags.Parse|response.WriteError
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofumpt
+    - golines
+  settings:
+    gci:
+      sections:
+        - Standard
+        - Default
+        - Prefix(github.com/mesosphere)
+        - Prefix(github.com/mesosphere/dynamic-credential-provider)
+    gofumpt:
+      extra-rules: true
+    golines:
+      max-len: 120
+  exclusions:
+    generated: lax
+    paths:
+      - ^zz_generated.*
+      - third_party$
+      - builtin$
+      - examples$

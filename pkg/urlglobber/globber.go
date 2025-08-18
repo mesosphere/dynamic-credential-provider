@@ -21,7 +21,7 @@ var (
 func GlobbedDomainForImage(img string) (string, error) {
 	namedImg, err := reference.ParseNormalizedNamed(img)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrInvalidImageReference, err)
+		return "", fmt.Errorf("%w: %w", ErrInvalidImageReference, err)
 	}
 
 	domain := reference.Domain(namedImg)

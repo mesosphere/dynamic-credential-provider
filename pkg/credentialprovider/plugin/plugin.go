@@ -124,7 +124,7 @@ func decodeRequest(data []byte) (*credentialproviderv1.CredentialProviderRequest
 		Decode(data, nil, nil)
 	if err != nil {
 		if runtime.IsNotRegisteredError(err) {
-			return nil, fmt.Errorf("%w: %v", ErrUnsupportedRequestKind, err)
+			return nil, fmt.Errorf("%w: %w", ErrUnsupportedRequestKind, err)
 		}
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func encodeResponse(response *credentialproviderv1.CredentialProviderResponse) (
 	encoder := codecs.EncoderForVersion(info.Serializer, credentialproviderv1.SchemeGroupVersion)
 	data, err := runtime.Encode(encoder, response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode response: %v", err)
+		return nil, fmt.Errorf("failed to encode response: %w", err)
 	}
 
 	return data, nil

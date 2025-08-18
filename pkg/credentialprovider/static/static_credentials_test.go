@@ -66,7 +66,6 @@ func TestGetCredentials(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			credentialsFile := path.Join(t.TempDir(), "image-credentials.json")

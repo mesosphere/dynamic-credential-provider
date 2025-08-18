@@ -79,16 +79,19 @@ jobs:
       - name: Export golang and golangci-lint versions
         id: versions
         run: |
-          echo "golangci-lint=$(devbox run -- golangci-lint version --format short)" >>"${GITHUB_OUTPUT}"
+          echo "golangci-lint=$(devbox run -- golangci-lint version --short)" >>"${GITHUB_OUTPUT}"
           echo "golang=$(devbox run -- go version | grep -o "[[:digit:]]\+.[[:digit:]]\+\(.[[:digit:]]\+\)\?")" >>"${GITHUB_OUTPUT}"
 
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
-          fail_on_error: true
+          fail_level: error
           reporter: github-pr-review
           golangci_lint_version: v${{ steps.versions.outputs.golangci-lint }}
           go_version: v${{ steps.versions.outputs.golang }}
+
+      - name: golangci-lint-fmt
+        run: devbox run -- make fmt
 
   generated:
     runs-on: ubuntu-22.04
