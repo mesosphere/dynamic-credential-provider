@@ -141,14 +141,14 @@ func copyFileAndPermissions(src, dst string, logger logrus.FieldLogger) error {
 	// Make a temporary file at the destination.
 	dstTmp := fmt.Sprintf("%s.tmp", dst)
 	if err := copy.Copy(src, dstTmp); err != nil {
-		return fmt.Errorf("failed to copy file: %s", err)
+		return fmt.Errorf("failed to copy file: %w", err)
 	}
 
 	// Move the temporary file into position. Using Rename is atomic
 	// (i.e., mv) and avoids issues where the destination file is in use.
 	err = os.Rename(dstTmp, dst)
 	if err != nil {
-		return fmt.Errorf("failed to rename file: %s", err)
+		return fmt.Errorf("failed to rename file: %w", err)
 	}
 
 	return nil

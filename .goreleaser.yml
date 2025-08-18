@@ -81,11 +81,11 @@ upx:
       - static-credential-provider
 archives:
   - name_template: '{{ .ProjectName }}_v{{trimprefix .Version "v"}}_{{ .Os }}_{{ .Arch }}'
-    builds:
+    ids:
       - dynamic-credential-provider
   - name_template: 'static-credential-provider_v{{trimprefix .Version "v"}}_{{ .Os }}_{{ .Arch }}'
     id: static-credential-provider
-    builds:
+    ids:
       - static-credential-provider
 dockers:
   - image_templates:

@@ -5,7 +5,7 @@ module github.com/mesosphere/dynamic-credential-provider/credential-providers
 
 go 1.24.0
 
-toolchain go1.24.1
+toolchain go1.25.0
 
 replace k8s.io/cloud-provider-gcp/providers => k8s.io/cloud-provider-gcp/providers v0.28.3-0.20250109201832-30a7574edecf
 

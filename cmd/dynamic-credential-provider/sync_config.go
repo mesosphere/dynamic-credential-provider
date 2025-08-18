@@ -67,8 +67,6 @@ func newSyncConfigCmd() *cobra.Command {
 			g, groupCtx := errgroup.WithContext(ctx)
 
 			for src, dest := range opts.filesToSync {
-				src := src   // Capture range variable to use in function call in goroutine below.
-				dest := dest // Capture range variable to use in function call in goroutine below.
 				g.Go(func() error {
 					fw, err := filewatcher.New(src, func(fp string) error {
 						lstat, err := os.Lstat(fp)

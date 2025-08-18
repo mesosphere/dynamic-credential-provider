@@ -41,7 +41,6 @@ func TestGlobbedDomainForImage(t *testing.T) {
 		wantGlobbed: "*.*", // To match docker.io.
 	}}
 	for _, tt := range tests {
-		tt := tt // Capture range variable.
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			globbed, err := urlglobber.GlobbedDomainForImage(tt.img)

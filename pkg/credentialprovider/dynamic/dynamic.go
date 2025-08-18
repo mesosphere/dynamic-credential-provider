@@ -87,8 +87,6 @@ func (p *dynamicProvider) registerCredentialProviderPlugins() error {
 	}
 
 	for _, provider := range p.cfg.CredentialProviders.Providers {
-		provider := provider // Capture range variable.
-
 		pluginBin := filepath.Join(pluginBinDir, provider.Name)
 		if _, err := os.Stat(pluginBin); err != nil {
 			return fmt.Errorf("error inspecting binary executable %q: %w", pluginBin, err)

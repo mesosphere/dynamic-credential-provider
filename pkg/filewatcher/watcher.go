@@ -93,7 +93,7 @@ func (cw *FileWatcher) Watch() {
 
 func (cw *FileWatcher) handleEvent(event fsnotify.Event) error {
 	// Only care about events which may modify the contents of the file.
-	if !(isWrite(event) || isRemove(event) || isCreate(event)) {
+	if !isWrite(event) && !isRemove(event) && !isCreate(event) {
 		return nil
 	}
 

@@ -15,6 +15,7 @@ import (
 	"os"
 	"sync"
 
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
@@ -65,7 +66,7 @@ func RunContainerInBackground(
 			hostCfg.NetworkMode.NetworkName(),
 			network.InspectOptions{},
 		)
-		if client.IsErrNotFound(err) {
+		if cerrdefs.IsNotFound(err) {
 			_, err = dClient.NetworkCreate(
 				ctx,
 				hostCfg.NetworkMode.NetworkName(),
@@ -157,8 +158,8 @@ func RetagAndPushImage( //nolint:revive // Lots of args is fine in these tests.
 		ctx,
 		srcImage,
 	)
-	if err != nil {
-		if !client.IsErrNotFound(err) {
+	if err != nil { //nolint:nestif // OK for test file.
+		if !cerrdefs.IsNotFound(err) {
 			return fmt.Errorf("failed to check if image is already present locally: %w", err)
 		}
 
@@ -235,7 +236,7 @@ func ReadFileFromContainer(ctx context.Context, containerID, fPath string) (stri
 	tr := tar.NewReader(r)
 
 	_, err = tr.Next()
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return "", nil
 	}
 	if err != nil {

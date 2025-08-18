@@ -32,7 +32,7 @@ import (
 // url.Parse require a scheme, but ours don't have schemes.  Adding a
 // scheme to make url.Parse happy, then clear out the resulting scheme.
 func ParsePotentiallySchemelessURL(u string) (*url.URL, error) {
-	if !(strings.HasPrefix(u, "https://") || strings.HasPrefix(u, "http://")) {
+	if !strings.HasPrefix(u, "https://") && !strings.HasPrefix(u, "http://") {
 		u = "https://" + u
 	}
 	parsed, err := url.Parse(u)

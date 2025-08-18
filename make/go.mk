@@ -24,16 +24,11 @@ define go_test
 		--junitfile-testsuite-name=relative \
 		--junitfile-testcase-classname=short \
 		-- \
-		-covermode=atomic \
-		-coverprofile=coverage.out \
 		-race \
 		-short \
 		-v \
 		$(if $(GOTEST_RUN),-run "$(GOTEST_RUN)") \
-		./... && \
-	go tool cover \
-		-html=coverage.out \
-		-o coverage.html
+		./...
 endef
 
 .PHONY: test
@@ -123,10 +118,22 @@ endif
 
 .PHONY: lint.%
 lint.%: ## Runs golangci-lint for a specific module
-lint.%: ; $(info $(M) linting $* module)
-	$(if $(filter-out root,$*),cd $* && )golines -w $$(go list ./... | sed "s|^$$(go list -m)|.|")
+lint.%: fmt.% ; $(info $(M) linting $* module)
 	$(if $(filter-out root,$*),cd $* && )golangci-lint run --fix --config=$(GOLANGCI_CONFIG_FILE)
-	$(if $(filter-out root,$*),cd $* && )golines -w $$(go list ./... | sed "s|^$$(go list -m)|.|")
+
+.PHONY: fmt
+fmt: ## Runs golangci-lint fmt for all modules in repository
+ifneq ($(wildcard $(REPO_ROOT)/go.mod),)
+fmt: fmt.root
+endif
+ifneq ($(words $(GO_SUBMODULES_NO_TOOLS)),0)
+fmt: $(addprefix lint.,$(GO_SUBMODULES_NO_TOOLS:/go.mod=))
+endif
+
+.PHONY: fmt.%
+fmt.%: ## Runs golangci-lint fmt for a specific module
+fmt.%: ; $(info $(M) formatting $* module)
+	$(if $(filter-out root,$*),cd $* && )golangci-lint fmt --config=$(GOLANGCI_CONFIG_FILE)
 	#$(if $(filter-out root,$*),cd $* && )go fix ./...
 
 .PHONY: mod-tidy
