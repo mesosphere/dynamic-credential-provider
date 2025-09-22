@@ -12,7 +12,7 @@ replace k8s.io/cloud-provider-gcp/providers => k8s.io/cloud-provider-gcp/provide
 require (
 	k8s.io/cloud-provider-aws v1.34.0
 	k8s.io/cloud-provider-gcp v0.0.0-20250109201832-30a7574edecf
-	sigs.k8s.io/cloud-provider-azure v1.34.0
+	sigs.k8s.io/cloud-provider-azure v1.34.1
 )
 
 require (
@@ -32,7 +32,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0 // indirect
 	github.com/Azure/msi-dataplane v0.4.3 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.5.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.38.3 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.29.14 // indirect
