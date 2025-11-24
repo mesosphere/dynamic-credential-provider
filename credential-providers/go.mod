@@ -12,7 +12,7 @@ replace k8s.io/cloud-provider-gcp/providers => k8s.io/cloud-provider-gcp/provide
 require (
 	k8s.io/cloud-provider-aws v1.34.1
 	k8s.io/cloud-provider-gcp v0.0.0-20250109201832-30a7574edecf
-	sigs.k8s.io/cloud-provider-azure v1.34.2
+	sigs.k8s.io/cloud-provider-azure v1.34.3
 )
 
 require (
